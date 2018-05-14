@@ -96,7 +96,7 @@ void loop () {
       Serial.println ("mode->applyMode (fColorDemo1);");
       mode->applyMode (fColorDemo1);
   }
-
+  //backlightLEDs ();
   LEDS.show ();
 }
 
@@ -110,6 +110,9 @@ void initDevices (void) {
 
 void readEEPROM (void) {}
 
+/*extern uint8_t NeoPixel_sine8(uint8_t x);
+extern uint8_t NeoPixel_gamma8(uint8_t x);*/
+
 int fColorDemo1 (long currentCallNumber) {
   static unsigned long millisAtStart;
   
@@ -122,26 +125,27 @@ int fColorDemo1 (long currentCallNumber) {
   }
   
   unsigned long deltaT = millis () - millisAtStart;
-  unsigned long timeStep = 80;
+  unsigned long timeStep = 5;
   float ledBrightness = 0.8;
   int direction = 1;
-  float wavelen = 1;
+  int wavelen = 20;
 
-  if (deltaT >  3000) { wavelen = 1.1; };
-  if (deltaT >  6000) { wavelen = 1.2; };
-  if (deltaT >  9000) { wavelen = 1.4; timeStep = 40; };
-  if (deltaT > 12000) { wavelen = 1.6; };
-  if (deltaT > 15000) { wavelen = 0.8; direction = -1; };
+  if (deltaT >  3000) { wavelen = 20; timeStep =  4; };
+  if (deltaT >  6000) { wavelen = 20; timeStep =  3; };
+  if (deltaT >  9000) { wavelen = 20; timeStep =  2; };
+  if (deltaT > 12000) { wavelen = 20; timeStep =  1; };
+  if (deltaT > 15000) { wavelen = 20; direction = -1; };
   if (deltaT > 18000) { LEDS.clear (); return 1; };
 
-//  Serial.print ("deltaT: ");   Serial.println (deltaT);
+  //Serial.print ("deltaT: ");   Serial.println (deltaT);
 
   for (int led = 0; led < numLEDs; led++) {
-     uint8_t firstBrightness = gamma8(sine8(deltaT/timeStep-direction*led*wavelen)%256));
+//     uint8_t firstBrightness = NeoPixel_gamma8(NeoPixel_sine8(static_cast<uint8_t>(deltaT/timeStep-direction*led*wavelen)%256));
+     uint8_t firstBrightness = NeoPixel_gamma8(NeoPixel_sine8((deltaT/timeStep-direction*led*wavelen)%256));
      findLED(led)->r = firstBrightness;
      //Serial.print (led); Serial.print (": "); Serial.println (firstBrightness); 
   }
-  // delay (10000);
+  //delay (10000);
   return 0;
 }
 
@@ -258,3 +262,12 @@ void Wheel (uint16_t WheelPos, byte &r, byte &g, byte &b) {
       break;
   }
 }
+
+void backlightLEDs (void) {
+  for (int i = 0; i < startingLEDs; i++) {
+    _leds[i].g = 255;
+    _leds[i].r = 5;
+    _leds[i].b = 5;
+  }
+}
+
