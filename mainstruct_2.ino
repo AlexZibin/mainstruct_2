@@ -193,7 +193,7 @@ int fColorDemo2 (long currentCallNumber) {
 int fColorDemo3 (long currentCallNumber) {
   static unsigned long millisAtStart;
   
-  //Serial.println ("Mode: fColorDemo1");
+  //Serial.println ("Mode: fColorDemo3");
   //Serial.println (currentCallNumber);
   
   if (currentCallNumber == 0) {
