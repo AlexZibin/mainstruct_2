@@ -118,6 +118,7 @@ int fColorDemo1 (long currentCallNumber) {
   
   if (currentCallNumber == 0) {
       millisAtStart = millis ();
+      LEDS.clear(true);
   }
   
   unsigned long deltaT = millis () - millisAtStart;
