@@ -69,7 +69,6 @@ int f3 (long dummy) {
   return 0;
 }
 
-//int fColorDemo10sec (long currentCallNumber);
 int (*modeFuncArray[])(long) = {fColorDemo1, fColorDemo2, fColorDemo3};
 ModeChanger *mode = new ModeChanger (modeFuncArray, sizeof(modeFuncArray)/sizeof(modeFuncArray[0]));
 
@@ -83,8 +82,10 @@ void setup () {
 int numPresses = 0;
 
 void loop () {
-  static long _currentCallNumber = 0;
+  //static long _currentCallNumber = 0;
   //mode->applyMode (fColorDemo10sec);
+
+  mode->loopThruModeFunc (100);
 
   if (button.shortPress()) {
       Serial.println (++numPresses);
@@ -96,12 +97,7 @@ void loop () {
       mode->applyMode (fColorDemo1);
   }
 
-  mode->loopThruModeFunc (100);
-
   LEDS.show ();
-
-  //mode->nextMode();
-  //delay (500);
 }
 
 void initDevices (void) {
@@ -114,7 +110,7 @@ void initDevices (void) {
 
 void readEEPROM (void) {}
 
-int fColorDemo3 (long currentCallNumber) {
+int fColorDemo1 (long currentCallNumber) {
   static unsigned long millisAtStart;
   
   //Serial.println ("Mode: fColorDemo1");
@@ -125,84 +121,26 @@ int fColorDemo3 (long currentCallNumber) {
   }
   
   unsigned long deltaT = millis () - millisAtStart;
-  int timeStep = 80;
-  int ledBrightness = 10;
+  unsigned long timeStep = 80;
+  float ledBrightness = 0.8;
   int direction = 1;
-  int wavelen = 12;
+  float wavelen = 1;
 
-  if (deltaT >  3000) wavelen = 10;
-  if (deltaT >  6000) {wavelen = 8; timeStep = 40; ledBrightness = 80;};
-  if (deltaT >  9000) {wavelen = 6; timeStep = 40; ledBrightness = 120;};
-  if (deltaT > 12000) wavelen = 4;
-  if (deltaT > 15000) {wavelen = 4; ledBrightness = 255;};
-  if (deltaT > 18000) { LEDS.clear (); return 1;};
-
-//  Serial.print ("deltaT: ");   Serial.println (deltaT);
-
-  for (int led = 0; led < numLEDs; led++) {
-      // =ОСТАТ(время/timeStep1-направление*диод; waveLen)<1
-   //Serial.print ("deltaT/timeStep-direction*led)%wavelen: ");   Serial.println ((deltaT/timeStep-direction*led)%wavelen);
-
-     if ((deltaT/timeStep-direction*led)%wavelen < 1) {
-          // switch this led on
-          // Хорошо бы и предыдущий led несильно зажигать, чтобы выглядело как затухающий след 
-          // И встречную волну пустить другого цвета
-          //findLED(led-direction)->b = 25;
-          findLED(led)->b = ledBrightness;
-      } else {
-          // switch this led off
-          findLED(led)->r = 0;
-          findLED(led)->g = 0;
-          findLED(led)->b = 0;
-          //findLED(led-1)->b = 000;
-      }
-  }
-  return 0;
-}
-
-int fColorDemo1 (long currentCallNumber) {
-  static unsigned long millisAtStart;
-  
-  //Serial.println ("Mode: fColorDemo2");
-  //Serial.println (currentCallNumber);
-  
-  if (currentCallNumber == 0) {
-      millisAtStart = millis ();
-  }
-  
-  unsigned long deltaT = millis () - millisAtStart;
-  int timeStep = 80;
-  int ledBrightness = 20;
-  int direction = -1;
-  int wavelen = 12;
-
-  if (deltaT >  3000) wavelen = 10;
-  if (deltaT >  6000) wavelen = 8;
-  if (deltaT >  9000) {wavelen = 6; timeStep = 40; ledBrightness += 80;};
-  if (deltaT > 12000) wavelen = 4;
-  if (deltaT > 15000) {wavelen = 4; ledBrightness = 255;};
-  if (deltaT > 18000) { LEDS.clear (); return 1;};
+  if (deltaT >  3000) { wavelen = 1.1; };
+  if (deltaT >  6000) { wavelen = 1.2; };
+  if (deltaT >  9000) { wavelen = 1.4; timeStep = 40; };
+  if (deltaT > 12000) { wavelen = 1.6; };
+  if (deltaT > 15000) { wavelen = 0.8; direction = -1; };
+  if (deltaT > 18000) { LEDS.clear (); return 1; };
 
 //  Serial.print ("deltaT: ");   Serial.println (deltaT);
 
   for (int led = 0; led < numLEDs; led++) {
-      // =ОСТАТ(время/timeStep1-направление*диод; waveLen)<1
-   //Serial.print ("deltaT/timeStep-direction*led)%wavelen: ");   Serial.println ((deltaT/timeStep-direction*led)%wavelen);
-
-     if ((deltaT/timeStep-direction*led)%wavelen < 1) {
-          // switch this led on
-          // Хорошо бы и предыдущий led несильно зажигать, чтобы выглядело как затухающий след 
-          // И встречную волну пустить другого цвета
-          //findLED(led-direction)->b = 25;
-          findLED(led)->r = ledBrightness;
-      } else {
-          // switch this led off
-          findLED(led)->r = 0;
-          findLED(led)->g = 0;
-          findLED(led)->b = 0;
-          //findLED(led-1)->b = 000;
-      }
+     uint8_t firstBrightness = gamma8(sine8(deltaT/timeStep-direction*led*wavelen)%256));
+     findLED(led)->r = firstBrightness;
+     //Serial.print (led); Serial.print (": "); Serial.println (firstBrightness); 
   }
+  // delay (10000);
   return 0;
 }
 
@@ -241,6 +179,52 @@ int fColorDemo2 (long currentCallNumber) {
           // И встречную волну пустить другого цвета
           //findLED(led-direction)->b = 25;
           findLED(led)->g = ledBrightness;
+      } else {
+          // switch this led off
+          findLED(led)->r = 0;
+          findLED(led)->g = 0;
+          findLED(led)->b = 0;
+          //findLED(led-1)->b = 000;
+      }
+  }
+  return 0;
+}
+
+int fColorDemo3 (long currentCallNumber) {
+  static unsigned long millisAtStart;
+  
+  //Serial.println ("Mode: fColorDemo1");
+  //Serial.println (currentCallNumber);
+  
+  if (currentCallNumber == 0) {
+      millisAtStart = millis ();
+  }
+  
+  unsigned long deltaT = millis () - millisAtStart;
+  int timeStep = 80;
+  int ledBrightness = 10;
+  int direction = 1;
+  int wavelen = 12;
+
+  if (deltaT >  3000) wavelen = 10;
+  if (deltaT >  6000) {wavelen = 8; timeStep = 40; ledBrightness = 80;};
+  if (deltaT >  9000) {wavelen = 6; timeStep = 40; ledBrightness = 120;};
+  if (deltaT > 12000) wavelen = 4;
+  if (deltaT > 15000) {wavelen = 4; ledBrightness = 255;};
+  if (deltaT > 18000) { LEDS.clear (); return 1;};
+
+//  Serial.print ("deltaT: ");   Serial.println (deltaT);
+
+  for (int led = 0; led < numLEDs; led++) {
+      // =ОСТАТ(время/timeStep1-направление*диод; waveLen)<1
+   //Serial.print ("deltaT/timeStep-direction*led)%wavelen: ");   Serial.println ((deltaT/timeStep-direction*led)%wavelen);
+
+     if ((deltaT/timeStep-direction*led)%wavelen < 1) {
+          // switch this led on
+          // Хорошо бы и предыдущий led несильно зажигать, чтобы выглядело как затухающий след 
+          // И встречную волну пустить другого цвета
+          //findLED(led-direction)->b = 25;
+          findLED(led)->b = ledBrightness;
       } else {
           // switch this led off
           findLED(led)->r = 0;
