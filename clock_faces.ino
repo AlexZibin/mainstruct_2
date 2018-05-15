@@ -4,15 +4,16 @@
 ////////////////////////////////////////////////////////////////////////////////////////////
 
 extern DateTime now;
- clockFaces = {minimalClock, basicClock, smoothSecond, outlineClock,   simplePendulum,
+ clockFaces = {minimalClock, basicClock, smoothSecond, outlineClock,   simplePendulum, breathingClock};
 
 //////////////////////////////////////////////////////////////////////////////////////////
 void minimalClock (long currentCallNumber) {
-  uint8_t hourPos = _hourPos (now.hour(), now.minute());
-  
-  findLED(hourPos)->r = 255;
-  findLED(now.minute())->g = 255;
-  findLED(now.second())->b = 255;
+    if (currentCallNumber > 10) { // a dark screen at first few calls
+        uint8_t hourPos = _hourPos (now.hour(), now.minute());
+        findLED(hourPos)->r = 255;
+        findLED(now.minute())->g = 255;
+        findLED(now.second())->b = 255;
+    }
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -60,6 +61,14 @@ void smoothSecond (long currentCallNumber) {
                 millisAtStart = millis ();
             }
 
+            // Hour (3 lines of code)
+                  uint8_t hourPos = _hourPos (now.hour(), now.minute());
+                  findLED(hourPos-1)->r = findLED(hourPos+1)->r = 30;
+                  findLED(hourPos)->r = 170;
+
+            // Minute  
+                  findLED(now.minute())->g = 255;
+
             // Second (5 lines of code)
                   uint8_t delta = static_cast <uint8_t> (128F*(millis () - millisAtStart)/1000F);
                   uint8_t secondBrightness1 = NeoPixel_gamma8(NeoPixel_sine8(( 64+delta)); // 64 means from Max to Min
@@ -68,19 +77,12 @@ void smoothSecond (long currentCallNumber) {
                   findLED(now.second ())->b =     secondBrightness1;
                   findLED(now.second () + 1)->b = secondBrightness2;    
         }
-        // Hour (3 lines of code)
-              uint8_t hourPos = _hourPos (now.hour(), now.minute());
-              findLED(hourPos-1)->r = findLED(hourPos+1)->r = 30;
-              findLED(hourPos)->r = 170;
-
-        // Minute  
-              findLED(now.minute())->g = 255;
     }
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
 void outlineClock (long currentCallNumber) {
-  for (int i = 0; i < numLEDs; i+= numLEDs/12) { // 60/12 = 5
+  for (int i = 0; i < numLEDs; i += numLEDs/12) { // 60/12 = 5
       findLED(i)->r = 100;
       findLED(i)->g = 100;
       findLED(i)->b = 100;
@@ -134,6 +136,12 @@ void simplePendulum (long currentCallNumber) {
     const uint8_t pendulumSpeed = 1;
     static unsigned long millisAtStart;
   
+    for (int i = 0; i < numLEDs; i += numLEDs/12) { // 60/12 = 5
+        findLED(i)->r = 10;
+        findLED(i)->g = 10;
+        findLED(i)->b = 100;
+    }
+
     if (currentCallNumber == 0) {
         millisAtStart = millis ();
     } else {
@@ -141,7 +149,7 @@ void simplePendulum (long currentCallNumber) {
         // Pendulum lights are set first, so hour/min/sec lights override and don't flicker as millisec passes
 
                 uint8_t deltaS = (((millis () - millisAtStart)*pendulumSpeed)%1000)/4;  // = 0..255
-                uint8_t pendulumPos = 30 + halfAmplitude - (2*halfAmplitude*sine8_0 (deltaS)/256f);
+                uint8_t pendulumPos = 30 + halfAmplitude - (2*halfAmplitude * static_cast <int> (sine8_0 (deltaS)))/256f; // = 38..22
 
                 findLED(pendulumPos)->r = 100;
                 findLED(pendulumPos)->g = 100;
@@ -161,28 +169,24 @@ void simplePendulum (long currentCallNumber) {
     }
 }
 
-void breathingClock(DateTime now) {
-  if (alarmTrig == false) {
-      breathBrightness = 15.0*(1.0+sin((3.14*(millis()%86400000)/2000.0)-1.57));
-      for (int i = 0; i < numLEDs; i++) {
-          fiveMins = i%5;
-          if (fiveMins == 0) {
-              findLED(i)->r = breathBrightness + 5;
-              findLED(i)->g = breathBrightness + 5;
-              findLED(i)->b = breathBrightness + 5;
-          } else {
-              findLED(i)->r = 0;
-              findLED(i)->g = 0;
-              findLED(i)->b = 0;
-          }
-       }
-  }
+//////////////////////////////////////////////////////////////////////////////////////////
+void breathingClock (long currentCallNumber) {
+    static unsigned long millisAtStart;
   
-  uint8_t hourPos = _hourPos (now.hour(), now.minute());
-
+    if (currentCallNumber == 0) {
+        millisAtStart = millis ();
+    } 
+    
+    uint8_t breathBrightness = sine8_0 (millisAtStart%256) >> 2; // 0..64
+    for (int i = 0; i < numLEDs; i += numLEDs/12) { // 60/12 = 5
+        findLED(i)->r = breathBrightness;
+        findLED(i)->g = breathBrightness;
+        findLED(i)->b = breathBrightness;
+    }
+  
   // Hour (3 lines of code)
-          findLED(hourPos-1)->r = 30;
-          findLED(hourPos+1)->r = 30;
+          uint8_t hourPos = _hourPos (now.hour(), now.minute());
+          findLED(hourPos-1)->r = findLED(hourPos+1)->r = 30;
           findLED(hourPos)->r  = 190;
   
   // Minute  
