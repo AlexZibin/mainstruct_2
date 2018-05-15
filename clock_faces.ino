@@ -5,9 +5,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////////
 
 extern DateTime now;
+{minimalClock, basicClock, smoothSecond, 
 
 //
-void minimalClock() {
+void minimalClock (long currentCallNumber) {
   uint8_t hourPos = _hourPos (now.hour(), now.minute());
   
   findLED(hourPos)->r = 255;
@@ -16,7 +17,7 @@ void minimalClock() {
 }
 
 //
-void basicClock(DateTime now) {
+void basicClock(long currentCallNumber) {
   uint8_t hourPos = _hourPos (now.hour(), now.minute());
 
   // Hour (9 lines of code)
@@ -43,34 +44,40 @@ void basicClock(DateTime now) {
           findLED(now.second())->b = 255;
 }
 
-// 
-void smoothSecond(DateTime now)
-{
-  if (now.second()!=old.second())
-    {
+//////////////////////////////////////////////////////////////////////////////////////////
+void smoothSecond (long currentCallNumber) {
+    static unsigned long millisAtStart;
+    if (currentCallNumber == 0) {
+        millisAtStart = millis ();
+    }
+    unsigned long deltaT = millis () - millisAtStart;
+    uint_8_t secondBrightness1, secondBrightness2;
+
+
+    if (now.second()!=old.second()) {
       old = now;
       cyclesPerSec = millis() - newSecTime;
       cyclesPerSecFloat = (float) cyclesPerSec;
       newSecTime = millis();      
     } 
-  // set hour, min & sec LEDs
-  fracOfSec = (millis() - newSecTime)/cyclesPerSecFloat;  // This divides by 733, but should be 1000 and not sure why???
-  if (subSeconds < cyclesPerSec) {secondBrightness = 50.0*(1.0+sin((3.14*fracOfSec)-1.57));}
-  if (subSeconds < cyclesPerSec) {secondBrightness2 = 50.0*(1.0+sin((3.14*fracOfSec)+1.57));}
+    // set hour, min & sec LEDs
+    fracOfSec = (millis() - newSecTime)/cyclesPerSecFloat;  // This divides by 733, but should be 1000 and not sure why???
+    if (subSeconds < cyclesPerSec) {secondBrightness = 50.0*(1.0+sin((3.14*fracOfSec)-1.57));}
+    if (subSeconds < cyclesPerSec) {secondBrightness2 = 50.0*(1.0+sin((3.14*fracOfSec)+1.57));}
 
-  uint8_t hourPos = _hourPos (now.hour(), now.minute());
-  // The colours are set last, so if on same LED mixed colours are created
-  // Hour (3 lines of code)
+    uint8_t hourPos = _hourPos (now.hour(), now.minute());
+    // The colours are set last, so if on same LED mixed colours are created
+    // Hour (3 lines of code)
           findLED(hourPos-1)->r = 30;
           findLED(hourPos+1)->r = 30;
           findLED(hourPos)->r  = 190;
-  
-  // Minute  
+
+    // Minute  
           findLED(now.minute())->g = 255;
-    
-  // Second  
-          findLED(now.second())->b = secondBrightness;
-          findLED(now.second()+59)->b = secondBrightness2;
+
+    // Second  
+          findLED(now.second ())->b = secondBrightness1;
+          findLED(now.second () + 1)->b = secondBrightness2;
 }
 
 //
