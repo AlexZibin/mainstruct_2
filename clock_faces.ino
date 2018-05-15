@@ -1,13 +1,12 @@
 ////////////////////////////////////////////////////////////////////////////////////////////
 //   CLOCK DISPLAY MODES
-// Add any new display mode functions here. Then add to the "void timeDisplay(DateTime now)" function.
-// Add each of the new display mode functions as a new "case", leaving default last.
+// Add any new display mode functions here.
 ////////////////////////////////////////////////////////////////////////////////////////////
 
 extern DateTime now;
-{minimalClock, basicClock, smoothSecond, 
+ clockFaces = {minimalClock, basicClock, smoothSecond, outlineClock, 
 
-//
+//////////////////////////////////////////////////////////////////////////////////////////
 void minimalClock (long currentCallNumber) {
   uint8_t hourPos = _hourPos (now.hour(), now.minute());
   
@@ -16,7 +15,7 @@ void minimalClock (long currentCallNumber) {
   findLED(now.second())->b = 255;
 }
 
-//
+//////////////////////////////////////////////////////////////////////////////////////////
 void basicClock(long currentCallNumber) {
   uint8_t hourPos = _hourPos (now.hour(), now.minute());
 
@@ -45,66 +44,51 @@ void smoothSecond (long currentCallNumber) {
     static unsigned long millisAtStart;
     static DateTime oldTime;
     static bool catchSeconds;
-    unsigned long deltaT;
-    uint8_t secondBrightness1, secondBrightness2;
   
     if (currentCallNumber == 0) {
-        //
-        oldTime = RTC.now();
+        oldTime = now;
         catchSeconds = false;
-    }
-    
-    if (!catchSeconds) {  // Don't show seconds, wait for catching the beginning of new second
-        if (now.second () != oldTime.second ()) {
-            catchSeconds = true;
-            millisAtStart = millis ();
+    } else {
+        if (!catchSeconds) {  // Don't show seconds, wait for catching the beginning of new second
+            if (now.second () != oldTime.second ()) {
+                catchSeconds = true;
+                millisAtStart = millis ();
+            }
+        } else {              // Usual operation
+            if (now.second () != oldTime.second ()) {
+                oldTime = now;
+                millisAtStart = millis ();
+            }
+
+            // Second (5 lines of code)
+                  uint8_t delta = static_cast<uint8_t>128F*(millis () - millisAtStart)/1000F;
+                  uint8_t secondBrightness1 = NeoPixel_gamma8(NeoPixel_sine8(( 64+delta));
+                  uint8_t secondBrightness2 = NeoPixel_gamma8(NeoPixel_sine8((192+delta));
+
+                  findLED(now.second ())->b =     secondBrightness1;
+                  findLED(now.second () + 1)->b = secondBrightness2;    
         }
-    } else {              // Usual operation
-        if (now.second () != oldTime.second ()) {
-            oldTime = now;
-            millisAtStart = millis ();
-        }
-        deltaT = millis () - millisAtStart;
+        // Hour (3 lines of code)
+              uint8_t hourPos = _hourPos (now.hour(), now.minute());
+              findLED(hourPos-1)->r = findLED(hourPos+1)->r = 30;
+              findLED(hourPos)->r = 170;
+
+        // Minute  
+              findLED(now.minute())->g = 255;
     }
-
-    if (now.second()!=old.second()) {
-      old = now;
-      cyclesPerSec = millis() - newSecTime;
-      cyclesPerSecFloat = (float) cyclesPerSec;
-      newSecTime = millis();      
-    } 
-    // set hour, min & sec LEDs
-    fracOfSec = (millis() - newSecTime)/cyclesPerSecFloat;  // This divides by 733, but should be 1000 and not sure why???
-    if (subSeconds < cyclesPerSec) {secondBrightness = 50.0*(1.0+sin((3.14*fracOfSec)-1.57));}
-    if (subSeconds < cyclesPerSec) {secondBrightness2 = 50.0*(1.0+sin((3.14*fracOfSec)+1.57));}
-
-    uint8_t hourPos = _hourPos (now.hour(), now.minute());
-    // The colours are set last, so if on same LED mixed colours are created
-    // Hour (2 lines of code)
-          findLED(hourPos-1)->r = findLED(hourPos+1)->r = 30;
-          findLED(hourPos)->r = 170;
-
-    // Minute  
-          findLED(now.minute())->g = 255;
-
-    // Second  
-          findLED(now.second ())->b = secondBrightness1;
-          findLED(now.second () + 1)->b = secondBrightness2;
 }
 
-//
-void outlineClock(DateTime now)
-{
-  for (int i = 0; i < numLEDs; i+= numLEDs/12) {
+//////////////////////////////////////////////////////////////////////////////////////////
+void outlineClock (long currentCallNumber) {
+  for (int i = 0; i < numLEDs; i+= numLEDs/12) { // 60/12 = 5
       findLED(i)->r = 100;
       findLED(i)->g = 100;
       findLED(i)->b = 100;
   }
-  uint8_t hourPos = _hourPos (now.hour(), now.minute());
 
   // Hour (3 lines of code)
-          findLED(hourPos-1)->r = 30;
-          findLED(hourPos+1)->r = 30;
+          uint8_t hourPos = _hourPos (now.hour(), now.minute());
+          findLED(hourPos-1)->r = findLED(hourPos+1)->r = 30;
           findLED(hourPos)->r  = 190;
   
   // Minute  
@@ -114,9 +98,8 @@ void outlineClock(DateTime now)
           findLED(now.second())->b = 255;
 }
 
-//
-void minimalMilliSec(DateTime now)
-{
+//////////////////////////////////////////////////////////////////////////////////////////
+void minimalMilliSec(long currentCallNumber) {
   if (now.second()!=old.second())
     {
       old = now;
