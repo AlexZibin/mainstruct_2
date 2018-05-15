@@ -213,6 +213,7 @@ int adjustHours (long currentCallNumber) {
         s = now.second ();
     } else {
         if (button.shortPress()) {
+            timeAdjustmentRoutines.nextMode();
         }
         if (button.longPress()) {
         }
@@ -230,6 +231,13 @@ int adjustHours (long currentCallNumber) {
 }    
  
 void drawAdjustmentClock (uint8_t h, uint8_t m, uint8_t s) {
+    
+    for (int i = 0; i < numLEDs; i += numLEDs/12) { // 60/12 = 5
+        findLED(i)->r =  5;
+        findLED(i)->g = 70;
+        findLED(i)->b =  5;
+    }
+
     // Hour (3 lines of code)
           uint8_t hourPos = _hourPos (h, m);
           findLED (hourPos)->r  = 190;
