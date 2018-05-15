@@ -20,9 +20,9 @@ returnValue minimalClock (long currentCallNumber) {
 
 //////////////////////////////////////////////////////////////////////////////////////////
 returnValue basicClock(long currentCallNumber) {
-  uint8_t hourPos = _hourPos (now.hour(), now.minute());
+    uint8_t hourPos = _hourPos (now.hour(), now.minute());
 
-  // Hour (6 lines of code)
+    // Hour (6 lines of code)
           findLED(hourPos-1)->r = findLED(hourPos+1)->r = 30;
           findLED(hourPos-1)->g = findLED(hourPos+1)->g = 0;
           findLED(hourPos-1)->b = findLED(hourPos+1)->b = 0;
@@ -30,13 +30,13 @@ returnValue basicClock(long currentCallNumber) {
           findLED(hourPos)->r  = 200;
           findLED(hourPos)->g  =   0;
           findLED(hourPos)->b  =   0;
-  
-  // Minute  
+
+    // Minute  
           findLED(now.minute())->r =   0;
           findLED(now.minute())->g = 255;
           findLED(now.minute())->b =   0;
-    
-  // Second  
+
+    // Second  
           findLED(now.second())->r =   0;
           findLED(now.second())->g =   0;
           findLED(now.second())->b = 255;
@@ -285,16 +285,20 @@ returnValue adjustMinutes (long currentCallNumber) {
     return returnValue::CONTINUE;
 }
 
-void drawAdjustmentClock (int ds) {
+void drawAdjustmentClock (int deltaSeconds) {
     
     for (int i = 0; i < numLEDs; i += numLEDs/12) { // 60/12 = 5
         findLED(i)->r =  5;
         findLED(i)->g = 70;
         findLED(i)->b =  5;
     }
+    
+    int ds = deltaSeconds % 60;
+    int dm = deltaSeconds % 60;
+    int dh = deltaSeconds % 60;
 
     // Hour (3 lines of code)
-          uint8_t hourPos = _hourPos (h, m);
+          uint8_t hourPos = _hourPos (now.hour(), now.minute());
           findLED (hourPos)->r  = 190;
           if (h >= 12) 
               findLED (hourPos-1)->r = findLED(hourPos+1)->r = 30;
