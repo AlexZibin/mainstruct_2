@@ -203,20 +203,42 @@ int (*_timeAdjustmentRoutines[])(long) = {adjustHours, adjustMinutes, adjustSeco
 ModeChanger timeAdjustmentRoutines (_timeAdjustmentRoutines, sizeof(_timeAdjustmentRoutines)/sizeof(_timeAdjustmentRoutines[0]));
 
 int adjustHours (long currentCallNumber) {
-    uint8_t h (now.hour ());
-    uint8_t m (now.minute ());
-    uint8_t s (now.second ());
+    static uint8_t h (now.hour ());
+    static uint8_t m (now.minute ());
+    static uint8_t s (now.second ());
     
+    if (!currentCallNumber) {
+        h = now.hour ();
+        m = now.minute ();
+        s = now.second ();
+    } else {
+        if (button.shortPress()) {
+        }
+        if (button.longPress()) {
+        }
+        if (timer.needToTrigger()) {
+        }
+    
+        if (rotaryTurnLeft ()) {
+            if (--h < 0 ) h = 23;
+        }    
+        if (rotaryTurnRight ()) {
+            if (++h > 23 ) h = 0;
+        }    
+        drawAdjustmentClock (h, m, s);
+    }
+}    
+ 
+void drawAdjustmentClock (uint8_t h, uint8_t m, uint8_t s) {
     // Hour (3 lines of code)
-          uint8_t hourPos = _hourPos (now.hour (), now.minute ());
-          findLED (hourPos-1)->r = findLED(hourPos+1)->r = 30;
+          uint8_t hourPos = _hourPos (h, m);
           findLED (hourPos)->r  = 190;
+          if (h >= 12) 
+              findLED (hourPos-1)->r = findLED(hourPos+1)->r = 30;
 
     // Minute  
-          findLED (now.minute ())->g = 255;
+          findLED (m)->g = 255;
 
     // Second  
-          findLED (now.second ())->b = 255;
-    
-    if (rotaryTurnLeft ()) {
+          findLED (s)->b = 255;
 }
