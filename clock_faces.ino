@@ -226,6 +226,10 @@ void adjustTime () {
         timer.switchOn ();
     } else {
         if (button.shortPress()) {
+
+    int dh, dm, ds;
+    splitHMS (deltaSeconds, dh, dm, ds);
+            
             RTC.adjust (DateTime (now.year (), now.month (), now.day (), h, m, s));
             return returnValue::NEXT;
         }
@@ -293,34 +297,9 @@ void drawAdjustmentClock (int deltaSeconds) {
         findLED(i)->b =  5;
     }
     
-    int dh = deltaSeconds / 3600;
-    int dm = (deltaSeconds - dh * 3600) / 60;
-    int ds = (deltaSeconds - dh * 3600 - dm * 60);
-    
-    dh += now.hour ();
-    while (dh >= 24) dh -= 24;
-    while (dh < 0) dh += 24;
+    int dh, dm, ds;
+    splitHMS (deltaSeconds, dh, dm, ds);
 
-    dm += now.minute ();
-    while (dm >= 60) {
-        dm -= 60;
-        dh += 1;
-    }
-    while (dm < 0) {
-        dm += 60;
-        dh -= 1;
-    }
-    
-    ds += now.second ();
-    while (ds >= 60) {
-        ds -= 60;
-        dm += 1;
-    }
-    while (ds < 0) {
-        ds += 60;
-        dm -= 1;
-    }
-    
     // Hour (3 lines of code)
           uint8_t hourPos = _hourPos (dh, dm);
           findLED (hourPos)->r  = 190;
@@ -334,6 +313,36 @@ void drawAdjustmentClock (int deltaSeconds) {
           findLED (ds)->b = 255;
 }
 
+void splitHMS (int deltaSeconds, int &dh, int &dm, int &ds) {
+    dh = deltaSeconds / 3600;
+    dm = (deltaSeconds - dh * 3600) / 60;
+    ds = (deltaSeconds - dh * 3600 - dm * 60);
+    
+    ds += now.second ();
+    while (ds >= 60) {
+        ds -= 60;
+        dm += 1;
+    }
+    while (ds < 0) {
+        ds += 60;
+        dm -= 1;
+    }
+    
+    dm += now.minute ();
+    while (dm >= 60) {
+        dm -= 60;
+        dh += 1;
+    }
+    while (dm < 0) {
+        dm += 60;
+        dh -= 1;
+    }
+    
+    dh += now.hour ();
+    while (dh >= 24) dh -= 24;
+    while (dh < 0) dh += 24;
+}
+                                                              
 /*
 returnValue adjustSeconds (long currentCallNumber) {
     static int dh;
