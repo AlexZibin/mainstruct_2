@@ -8,18 +8,18 @@ int (*clockFacesArray[])(long) = {minimalClock, basicClock, smoothSecond, outlin
 ModeChanger clockFaces (clockFacesArray, sizeof(clockFacesArray)/sizeof(clockFacesArray[0]));
 
 //////////////////////////////////////////////////////////////////////////////////////////
-int minimalClock (long currentCallNumber) {
+returnValue minimalClock (long currentCallNumber) {
     if (currentCallNumber > 10) { // a dark screen at first few calls
         uint8_t hourPos = _hourPos (now.hour(), now.minute());
         findLED(hourPos)->r = 255;
         findLED(now.minute())->g = 255;
         findLED(now.second())->b = 255;
     }
-    return 0;
+    return returnValue::CONTINUE;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
-int basicClock(long currentCallNumber) {
+returnValue basicClock(long currentCallNumber) {
   uint8_t hourPos = _hourPos (now.hour(), now.minute());
 
   // Hour (6 lines of code)
@@ -41,11 +41,11 @@ int basicClock(long currentCallNumber) {
           findLED(now.second())->g =   0;
           findLED(now.second())->b = 255;
 
-    return 0;
+    return returnValue::CONTINUE;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
-int smoothSecond (long currentCallNumber) {
+returnValue smoothSecond (long currentCallNumber) {
     static unsigned long millisAtStart;
     static DateTime oldTime;
     static bool catchSeconds;
@@ -82,11 +82,11 @@ int smoothSecond (long currentCallNumber) {
                   findLED(now.second () + 1)->b = secondBrightness2;    
         }
     }
-    return 0;
+    return returnValue::CONTINUE;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
-int outlineClock (long currentCallNumber) {
+returnValue outlineClock (long currentCallNumber) {
   for (int i = 0; i < numLEDs; i += numLEDs/12) { // 60/12 = 5
       findLED(i)->r = 100;
       findLED(i)->g = 100;
@@ -104,11 +104,11 @@ int outlineClock (long currentCallNumber) {
   // Second  
           findLED(now.second())->b = 255;
 
-    return 0;
+    return returnValue::CONTINUE;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
-/*int minimalMilliSec(long currentCallNumber) {
+/*returnValue minimalMilliSec(long currentCallNumber) {
   if (now.second()!=old.second())
     {
       old = now;
@@ -136,11 +136,11 @@ int outlineClock (long currentCallNumber) {
   // Second  FIXED
           findLED(now.second())->b = 200;
 
-    return 0;
+    return returnValue::CONTINUE;
 }*/
 
 //////////////////////////////////////////////////////////////////////////////////////////
-int simplePendulum (long currentCallNumber) {
+returnValue simplePendulum (long currentCallNumber) {
     const int halfAmplitude = 8;
     const uint8_t pendulumSpeed = 1;
     static unsigned long millisAtStart;
@@ -176,11 +176,11 @@ int simplePendulum (long currentCallNumber) {
         // Second  
                 findLED(now.second())->b = 255;
     }
-    return 0;
+    return returnValue::CONTINUE;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
-int breathingClock (long currentCallNumber) {
+returnValue breathingClock (long currentCallNumber) {
     static unsigned long millisAtStart;
   
     if (currentCallNumber == 0) {
@@ -205,15 +205,15 @@ int breathingClock (long currentCallNumber) {
   // Second  
           findLED(now.second())->b = 255;
 
-    return 0;
+    return returnValue::CONTINUE;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Time adjustment routines
-int (*_timeAdjustmentRoutines[])(long) = {adjustHours, adjustMinutes, adjustSeconds};
-ModeChanger timeAdjustmentRoutines (_timeAdjustmentRoutines, sizeof(_timeAdjustmentRoutines)/sizeof(_timeAdjustmentRoutines[0]));
+//returnValue (*_timeAdjustmentRoutines[])(long) = {adjustHours, adjustMinutes, adjustSeconds};
+//ModeChanger timeAdjustmentRoutines (_timeAdjustmentRoutines, sizeof(_timeAdjustmentRoutines)/sizeof(_timeAdjustmentRoutines[0]));
 
-int adjustHours (long currentCallNumber) {
+void adjustTime () {
     static uint8_t h (now.hour ());
     static uint8_t m (now.minute ());
     static uint8_t s (now.second ());
@@ -226,10 +226,11 @@ int adjustHours (long currentCallNumber) {
         timer.switchOn ();
     } else {
         if (button.shortPress()) {
-            RTC.adjust(DateTime(now.year(), now.month(), now.day(), h, now.minute(), now.second()));
-            timeAdjustmentRoutines.nextMode();
+            RTC.adjust (DateTime (now.year (), now.month (), now.day (), h, m, s));
+            return returnValue::NEXT;
         }
         if (button.longPress() || timer.needToTrigger()) { // Adjustment will be aborted 
+            return returnValue::TERMINATE;
         }
     
         if (rotaryTurnLeft ()) {
@@ -242,10 +243,49 @@ int adjustHours (long currentCallNumber) {
         }    
         drawAdjustmentClock (h, m, s);
     }
-    return 0;
-}    
- 
-void drawAdjustmentClock (uint8_t h, uint8_t m, uint8_t s) {
+    return returnValue::CONTINUE;
+}
+                                         
+returnValue adjustMinutes (long currentCallNumber) {
+    static uint8_t h (now.hour ());
+    static uint8_t m (now.minute ());
+    static uint8_t s (now.second ());
+    
+    if (!currentCallNumber) {
+        h = now.hour ();
+        m = now.minute ();
+        s = now.second ();
+        timer.setInterval ("ms", 10000); // Adjustment will be aborted after 10 seconds without user's activity
+        timer.switchOn ();
+    } else {
+        if (button.shortPress()) {
+            RTC.adjust (DateTime (now.year (), now.month (), now.day (), h, m, s));
+            return returnValue::NEXT;
+        }
+        if (button.longPress() || timer.needToTrigger()) { // Adjustment will be aborted 
+            return returnValue::TERMINATE;
+        }
+    
+        if (rotaryTurnLeft ()) {
+            if (--m < 0 ) {
+                m = 59;
+                if (--h < 0 ) h = 23;
+            }
+            timer.switchOn (); // user's activity - no termination is necessary
+        }    
+        if (rotaryTurnRight ()) {
+            if (++m > 59 ) {
+                m = 0;
+                if (++h > 23 ) h = 0;
+            }
+            timer.switchOn ();
+        }    
+        drawAdjustmentClock (h, m, s);
+    }
+    return returnValue::CONTINUE;
+}
+
+void drawAdjustmentClock (int ds) {
     
     for (int i = 0; i < numLEDs; i += numLEDs/12) { // 60/12 = 5
         findLED(i)->r =  5;
@@ -265,3 +305,45 @@ void drawAdjustmentClock (uint8_t h, uint8_t m, uint8_t s) {
     // Second  
           findLED (s)->b = 255;
 }
+
+/*
+returnValue adjustSeconds (long currentCallNumber) {
+    static int dh;
+    static int dm;
+    static int ds;
+    
+    if (!currentCallNumber) {
+        dh = 0;
+        dm = 0;
+        ds = 0;
+        timer.setInterval ("ms", 10000); // Adjustment will be aborted after 10 seconds without user's activity
+        timer.switchOn ();
+    } else {
+        if (button.shortPress()) {
+            RTC.adjust (DateTime (now.year (), now.month (), now.day (), now.hour () + dh, now.minute () + dm, now.second () + ds));
+            return returnValue::NEXT;
+        }
+        if (button.longPress() || timer.needToTrigger()) { // Adjustment will be aborted 
+            return returnValue::TERMINATE;
+        }
+    
+        if (rotaryTurnLeft ()) {
+            if (--s < 0 ) {
+                s = 59;
+                if (--m < 0 ) m = 59;
+            }
+            timer.switchOn (); // user's activity - no termination is necessary
+        }    
+        if (rotaryTurnRight ()) {
+            if (++s > 59 ) {
+                s = 0;
+                if (++m > 59 ) m = 0;
+            }
+            timer.switchOn ();
+        }    
+        drawAdjustmentClock (h, m, s);
+    }
+    return returnValue::CONTINUE;
+}
+
+*/
