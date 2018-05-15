@@ -45,20 +45,26 @@ void smoothSecond (long currentCallNumber) {
     static unsigned long millisAtStart;
     static DateTime oldTime;
     static bool catchSeconds;
-    //unsigned long deltaT = millis () - millisAtStart;
+    unsigned long deltaT;
     uint8_t secondBrightness1, secondBrightness2;
   
     if (currentCallNumber == 0) {
-        //millisAtStart = millis ();
+        //
         oldTime = RTC.now();
         catchSeconds = false;
     }
     
     if (!catchSeconds) {  // Don't show seconds, wait for catching the beginning of new second
-        if (now.second () > oldTime.second ())
+        if (now.second () != oldTime.second ()) {
             catchSeconds = true;
+            millisAtStart = millis ();
+        }
     } else {              // Usual operation
-        
+        if (now.second () != oldTime.second ()) {
+            oldTime = now;
+            millisAtStart = millis ();
+        }
+        deltaT = millis () - millisAtStart;
     }
 
     if (now.second()!=old.second()) {
@@ -74,10 +80,9 @@ void smoothSecond (long currentCallNumber) {
 
     uint8_t hourPos = _hourPos (now.hour(), now.minute());
     // The colours are set last, so if on same LED mixed colours are created
-    // Hour (3 lines of code)
-          findLED(hourPos-1)->r = 30;
-          findLED(hourPos+1)->r = 30;
-          findLED(hourPos)->r  = 190;
+    // Hour (2 lines of code)
+          findLED(hourPos-1)->r = findLED(hourPos+1)->r = 30;
+          findLED(hourPos)->r = 170;
 
     // Minute  
           findLED(now.minute())->g = 255;
