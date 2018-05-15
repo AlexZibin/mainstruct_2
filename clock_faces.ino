@@ -99,7 +99,7 @@ void outlineClock (long currentCallNumber) {
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
-void minimalMilliSec(long currentCallNumber) {
+/*void minimalMilliSec(long currentCallNumber) {
   if (now.second()!=old.second())
     {
       old = now;
@@ -126,46 +126,53 @@ void minimalMilliSec(long currentCallNumber) {
   
   // Second  FIXED
           findLED(now.second())->b = 200;
-}
+}*/
 
 // Pendulum will be at the bottom and left for one second and right for one second
-void simplePendulum(DateTime now)
-{
-  if (now.second()!=old.second()) {
-      old = now;
-      cyclesPerSec = millis() - newSecTime;
-      cyclesPerSecFloat = (float) cyclesPerSec;
-      newSecTime = millis();
-      if (swingBack == true) {
-        swingBack = false;
-      } else {
-        swingBack = true;
-      }
-  } 
-    
-  // set hour, min & sec LEDs
-  fracOfSec = (millis() - newSecTime)/cyclesPerSecFloat;  // This divides by 733, but should be 1000 and not sure why???
-  if (subSeconds < cyclesPerSec && swingBack == true) {pendulumPos = 27.0 + 3.4*(1.0+sin((3.14*fracOfSec)-1.57));}
-  if (subSeconds < cyclesPerSec && swingBack == false) {pendulumPos = 27.0 + 3.4*(1.0+sin((3.14*fracOfSec)+1.57));}
-
-  uint8_t hourPos = _hourPos (now.hour(), now.minute());
-    
-  // Pendulum lights are set first, so hour/min/sec lights override and don't flicker as millisec passes
-  findLED(pendulumPos)->r = 100;
-  findLED(pendulumPos)->g = 100;
-  findLED(pendulumPos)->b = 100;
-    
-  // The colours are set last, so if on same LED mixed colours are created
-  // Hour (3 lines of code)
-          findLED(hourPos-1)->r = 30;
-          findLED(hourPos+1)->r = 30;
-          findLED(hourPos)->r  = 190;
+void simplePendulum(long currentCallNumber) {
+    static unsigned long millisAtStart;
   
-  // Minute  
-          findLED(now.minute())->g = 255;
-    
-  // Second  
-          findLED(now.second())->b = 255;
+    if (currentCallNumber == 0) {
+        millisAtStart = millis ();
+    } else {
+
+
+     
+     
+
+    // set hour, min & sec LEDs
+    fracOfSec = (millis() - newSecTime)/cyclesPerSecFloat;  // This divides by 733, but should be 1000 and not sure why???
+    if (subSeconds < cyclesPerSec && swingBack == true) {pendulumPos = 27.0 + 3.4*(1.0+sin((3.14*fracOfSec)-1.57));}
+    if (subSeconds < cyclesPerSec && swingBack == false) {pendulumPos = 27.0 + 3.4*(1.0+sin((3.14*fracOfSec)+1.57));}
+
+    uint8_t hourPos = _hourPos (now.hour(), now.minute());
+
+    // Pendulum lights are set first, so hour/min/sec lights override and don't flicker as millisec passes
+     
+                  uint8_t delta = static_cast<uint8_t>128F*(millis () - millisAtStart)/1000F;
+                  uint8_t secondBrightness1 = NeoPixel_gamma8(NeoPixel_sine8(( 64+delta));
+                  uint8_t secondBrightness2 = NeoPixel_gamma8(NeoPixel_sine8((192+delta));
+
+                  findLED(now.second ())->b =     secondBrightness1;
+                  findLED(now.second () + 1)->b = secondBrightness2;    
+     
+     
+    findLED(pendulumPos)->r = 100;
+    findLED(pendulumPos)->g = 100;
+    findLED(pendulumPos)->b = 100;
+
+    // The colours are set last, so if on same LED mixed colours are created
+    // Hour (3 lines of code)
+            findLED(hourPos-1)->r = 30;
+            findLED(hourPos+1)->r = 30;
+            findLED(hourPos)->r  = 190;
+
+    // Minute  
+            findLED(now.minute())->g = 255;
+
+    // Second  
+            findLED(now.second())->b = 255;
+    }
 }
 
 void breathingClock(DateTime now) {
