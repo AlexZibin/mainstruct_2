@@ -15,6 +15,7 @@ int minimalClock (long currentCallNumber) {
         findLED(now.minute())->g = 255;
         findLED(now.second())->b = 255;
     }
+    return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -39,6 +40,8 @@ int basicClock(long currentCallNumber) {
           findLED(now.second())->r =   0;
           findLED(now.second())->g =   0;
           findLED(now.second())->b = 255;
+
+    return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -79,6 +82,7 @@ int smoothSecond (long currentCallNumber) {
                   findLED(now.second () + 1)->b = secondBrightness2;    
         }
     }
+    return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -99,6 +103,8 @@ int outlineClock (long currentCallNumber) {
     
   // Second  
           findLED(now.second())->b = 255;
+
+    return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -129,6 +135,8 @@ int outlineClock (long currentCallNumber) {
   
   // Second  FIXED
           findLED(now.second())->b = 200;
+
+    return 0;
 }*/
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -168,6 +176,7 @@ int simplePendulum (long currentCallNumber) {
         // Second  
                 findLED(now.second())->b = 255;
     }
+    return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -195,6 +204,8 @@ int breathingClock (long currentCallNumber) {
     
   // Second  
           findLED(now.second())->b = 255;
+
+    return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -211,23 +222,27 @@ int adjustHours (long currentCallNumber) {
         h = now.hour ();
         m = now.minute ();
         s = now.second ();
+        timer.setInterval ("ms", 10000); // Adjustment will be aborted after 10 seconds without user's activity
+        timer.switchOn ();
     } else {
         if (button.shortPress()) {
+            RTC.adjust(DateTime(now.year(), now.month(), now.day(), h, now.minute(), now.second()));
             timeAdjustmentRoutines.nextMode();
         }
-        if (button.longPress()) {
-        }
-        if (timer.needToTrigger()) {
+        if (button.longPress() || timer.needToTrigger()) { // Adjustment will be aborted 
         }
     
         if (rotaryTurnLeft ()) {
             if (--h < 0 ) h = 23;
+            timer.switchOn (); // user's activity - no termination is necessary
         }    
         if (rotaryTurnRight ()) {
             if (++h > 23 ) h = 0;
+            timer.switchOn ();
         }    
         drawAdjustmentClock (h, m, s);
     }
+    return 0;
 }    
  
 void drawAdjustmentClock (uint8_t h, uint8_t m, uint8_t s) {
