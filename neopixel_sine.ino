@@ -43,16 +43,19 @@ static const uint8_t PROGMEM _gammaTable[256] = {
   182,184,186,188,191,193,195,197,199,202,204,206,209,211,213,215,
   218,220,223,225,227,230,232,235,237,240,242,245,247,250,252,255};
 
-uint8_t NeoPixel_sine8(uint8_t x) {
+uint8_t NeoPixel_sine8 (int x) {
+
+    // foolproof checks first :)
+            while (x < 0) x += 256;
+            if (x >= 256) x %= 256;
+    
     return pgm_read_byte(&_sineTable[x]); // 0-255 in, 0-255 out
 }
 
-uint8_t sine8_0 (uint8_t x) { // starts from 0, not from 128 as NeoPixel_sine8
-    uint16_t x16 = static_cast <uint16_t> (x) + 192;
-    x = static_cast <uint8_t> (x16 % 256);
-    return NeoPixel_sine8 (x);
+uint8_t sine8_0 (int x) { // starts from 0, not from 128 as NeoPixel_sine8
+    return NeoPixel_sine8 (x + 192);
 }
 
-uint8_t NeoPixel_gamma8(uint8_t x) {
+uint8_t NeoPixel_gamma8 (int x) {
     return pgm_read_byte(&_gammaTable[x]); // 0-255 in, 0-255 out
 }
