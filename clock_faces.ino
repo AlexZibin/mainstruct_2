@@ -128,9 +128,9 @@ void outlineClock (long currentCallNumber) {
           findLED(now.second())->b = 200;
 }*/
 
-// Pendulum will be at the bottom and left for one second and right for one second
+//////////////////////////////////////////////////////////////////////////////////////////
 void simplePendulum (long currentCallNumber) {
-    const uint8_t halfAmplitude = 8;
+    const int halfAmplitude = 8;
     const uint8_t pendulumSpeed = 1;
     static unsigned long millisAtStart;
   
@@ -140,15 +140,8 @@ void simplePendulum (long currentCallNumber) {
 
         // Pendulum lights are set first, so hour/min/sec lights override and don't flicker as millisec passes
 
-                      //uint8_t delta = static_cast<uint8_t>128F*(millis () - millisAtStart)/1000F;
-                      uint8_t secondBrightness1 = NeoPixel_gamma8(NeoPixel_sine8(( 64+delta));
-                      uint8_t secondBrightness2 = NeoPixel_gamma8(NeoPixel_sine8((192+delta));
-
-                      findLED(now.second ())->b =     secondBrightness1;
-                      findLED(now.second () + 1)->b = secondBrightness2;
-                               
                 uint8_t deltaS = (((millis () - millisAtStart)*pendulumSpeed)%1000)/4;  // = 0..255
-                uint8_t pendulumPos = 30 + halfAmplitude - 
+                uint8_t pendulumPos = 30 + halfAmplitude - (2*halfAmplitude*sine8_0 (deltaS)/256f);
 
                 findLED(pendulumPos)->r = 100;
                 findLED(pendulumPos)->g = 100;
