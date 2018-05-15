@@ -4,10 +4,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////////
 
 extern DateTime now;
- clockFaces = {minimalClock, basicClock, smoothSecond, outlineClock,   simplePendulum, breathingClock};
+int (*clockFaces[])(long) = {minimalClock, basicClock, smoothSecond, outlineClock,   simplePendulum, breathingClock};
 
 //////////////////////////////////////////////////////////////////////////////////////////
-void minimalClock (long currentCallNumber) {
+int minimalClock (long currentCallNumber) {
     if (currentCallNumber > 10) { // a dark screen at first few calls
         uint8_t hourPos = _hourPos (now.hour(), now.minute());
         findLED(hourPos)->r = 255;
@@ -17,7 +17,7 @@ void minimalClock (long currentCallNumber) {
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
-void basicClock(long currentCallNumber) {
+int basicClock(long currentCallNumber) {
   uint8_t hourPos = _hourPos (now.hour(), now.minute());
 
   // Hour (6 lines of code)
@@ -41,7 +41,7 @@ void basicClock(long currentCallNumber) {
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
-void smoothSecond (long currentCallNumber) {
+int smoothSecond (long currentCallNumber) {
     static unsigned long millisAtStart;
     static DateTime oldTime;
     static bool catchSeconds;
@@ -81,7 +81,7 @@ void smoothSecond (long currentCallNumber) {
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
-void outlineClock (long currentCallNumber) {
+int outlineClock (long currentCallNumber) {
   for (int i = 0; i < numLEDs; i += numLEDs/12) { // 60/12 = 5
       findLED(i)->r = 100;
       findLED(i)->g = 100;
@@ -101,7 +101,7 @@ void outlineClock (long currentCallNumber) {
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
-/*void minimalMilliSec(long currentCallNumber) {
+/*int minimalMilliSec(long currentCallNumber) {
   if (now.second()!=old.second())
     {
       old = now;
@@ -131,7 +131,7 @@ void outlineClock (long currentCallNumber) {
 }*/
 
 //////////////////////////////////////////////////////////////////////////////////////////
-void simplePendulum (long currentCallNumber) {
+int simplePendulum (long currentCallNumber) {
     const int halfAmplitude = 8;
     const uint8_t pendulumSpeed = 1;
     static unsigned long millisAtStart;
@@ -170,7 +170,7 @@ void simplePendulum (long currentCallNumber) {
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
-void breathingClock (long currentCallNumber) {
+int breathingClock (long currentCallNumber) {
     static unsigned long millisAtStart;
   
     if (currentCallNumber == 0) {
@@ -184,6 +184,19 @@ void breathingClock (long currentCallNumber) {
         findLED(i)->b = breathBrightness;
     }
   
+  // Hour (3 lines of code)
+          uint8_t hourPos = _hourPos (now.hour(), now.minute());
+          findLED(hourPos-1)->r = findLED(hourPos+1)->r = 30;
+          findLED(hourPos)->r  = 190;
+  
+  // Minute  
+          findLED(now.minute())->g = 255;
+    
+  // Second  
+          findLED(now.second())->b = 255;
+}
+
+int adjustHours (long currentCallNumber) {
   // Hour (3 lines of code)
           uint8_t hourPos = _hourPos (now.hour(), now.minute());
           findLED(hourPos-1)->r = findLED(hourPos+1)->r = 30;
