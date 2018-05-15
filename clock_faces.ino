@@ -293,9 +293,9 @@ void drawAdjustmentClock (int deltaSeconds) {
         findLED(i)->b =  5;
     }
     
-    int ds = deltaSeconds % 60;
-    int dm = deltaSeconds % 60;
-    int dh = deltaSeconds % 60;
+    int dh = deltaSeconds / 3600;
+    int dm = (deltaSeconds - dh * 3600) / 60;
+    int ds = (deltaSeconds - dh * 3600 - dm * 60);
 
     // Hour (3 lines of code)
           uint8_t hourPos = _hourPos (now.hour(), now.minute());
