@@ -53,24 +53,8 @@ DualFunctionButton button(menuPin, 1000, INPUT_PULLUP);
         }
 // END CONVERSIONS
 
-
-int f1 (long dummy) {
-  Serial.println ("\nMode: f1");
-  return 0;
-}
-
-int f2 (long dummy) {
-  Serial.println ("Mode: f2");
-  return 0;
-}
-
-int f3 (long dummy) {
-  Serial.println ("Mode: f3");
-  return 0;
-}
-
 int (*modeFuncArray[])(long) = {fColorDemo1, fColorDemo2, fColorDemo3};
-ModeChanger *mode = new ModeChanger (modeFuncArray, sizeof(modeFuncArray)/sizeof(modeFuncArray[0]));
+ModeChanger *intro = new ModeChanger (modeFuncArray, sizeof(modeFuncArray)/sizeof(modeFuncArray[0]));
 
 void setup () {
   initDevices ();
@@ -81,23 +65,25 @@ void setup () {
 
 int numPresses = 0;
 
+DateTime now;
+
 void loop () {
-  //static long _currentCallNumber = 0;
-  //mode->applyMode (fColorDemo10sec);
+    //static long _currentCallNumber = 0;
+    //mode->applyMode (fColorDemo10sec);
+    now = RTC.now();
+    intro->loopThruModeFunc (100);
 
-  mode->loopThruModeFunc (100);
-
-  if (button.shortPress()) {
+    if (button.shortPress()) {
       Serial.println (++numPresses);
-      Serial.println ("mode->nextMode();");
-      mode->nextMode();
-  }
-  if (button.longPress()) {
-      Serial.println ("mode->applyMode (fColorDemo1);");
-      mode->applyMode (fColorDemo1);
-  }
-  //backlightLEDs ();
-  LEDS.show ();
+      Serial.println ("intro->nextMode();");
+      intro->nextMode();
+    }
+    if (button.longPress()) {
+      Serial.println ("intro->applyMode (fColorDemo1);");
+      intro->applyMode (fColorDemo1);
+    }
+    //backlightLEDs ();
+    LEDS.show ();
 }
 
 void initDevices (void) {
