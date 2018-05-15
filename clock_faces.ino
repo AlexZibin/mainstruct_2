@@ -4,7 +4,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////
 
 extern DateTime now;
-int (*clockFaces[])(long) = {minimalClock, basicClock, smoothSecond, outlineClock,   simplePendulum, breathingClock};
+int (*clockFacesArray[])(long) = {minimalClock, basicClock, smoothSecond, outlineClock,   simplePendulum, breathingClock};
+ModeChanger clockFaces (clockFacesArray, sizeof(clockFacesArray)/sizeof(clockFacesArray[0]));
 
 //////////////////////////////////////////////////////////////////////////////////////////
 int minimalClock (long currentCallNumber) {
@@ -196,15 +197,20 @@ int breathingClock (long currentCallNumber) {
           findLED(now.second())->b = 255;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////
+// Time adjustment routines
+int (*_timeAdjustmentRoutines[])(long) = {adjustHours, adjustMinutes, adjustSeconds};
+ModeChanger timeAdjustmentRoutines (_timeAdjustmentRoutines, sizeof(_timeAdjustmentRoutines)/sizeof(_timeAdjustmentRoutines[0]));
+
 int adjustHours (long currentCallNumber) {
-  // Hour (3 lines of code)
+    // Hour (3 lines of code)
           uint8_t hourPos = _hourPos (now.hour(), now.minute());
           findLED(hourPos-1)->r = findLED(hourPos+1)->r = 30;
           findLED(hourPos)->r  = 190;
-  
-  // Minute  
+
+    // Minute  
           findLED(now.minute())->g = 255;
-    
-  // Second  
+
+    // Second  
           findLED(now.second())->b = 255;
 }
