@@ -203,14 +203,20 @@ int (*_timeAdjustmentRoutines[])(long) = {adjustHours, adjustMinutes, adjustSeco
 ModeChanger timeAdjustmentRoutines (_timeAdjustmentRoutines, sizeof(_timeAdjustmentRoutines)/sizeof(_timeAdjustmentRoutines[0]));
 
 int adjustHours (long currentCallNumber) {
+    uint8_t h (now.hour ());
+    uint8_t m (now.minute ());
+    uint8_t s (now.second ());
+    
     // Hour (3 lines of code)
-          uint8_t hourPos = _hourPos (now.hour(), now.minute());
-          findLED(hourPos-1)->r = findLED(hourPos+1)->r = 30;
-          findLED(hourPos)->r  = 190;
+          uint8_t hourPos = _hourPos (now.hour (), now.minute ());
+          findLED (hourPos-1)->r = findLED(hourPos+1)->r = 30;
+          findLED (hourPos)->r  = 190;
 
     // Minute  
-          findLED(now.minute())->g = 255;
+          findLED (now.minute ())->g = 255;
 
     // Second  
-          findLED(now.second())->b = 255;
+          findLED (now.second ())->b = 255;
+    
+    if (rotaryTurnLeft ()) {
 }
