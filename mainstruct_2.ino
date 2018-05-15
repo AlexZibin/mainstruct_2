@@ -1,12 +1,9 @@
 #include "modeChanger.h"
 #include <FastLED.h>  
 #include "DualFunctionButton.h"
-
-#define startingLEDs 4 // Number of backlight LEDs BEFORE the strip
-#define numLEDs 60 // Number of LEDs in strip
-#define LEDOffset  30 // First LED in strip corresponds to 30-th second
-
-struct CRGB _leds[startingLEDs+numLEDs];
+#include <Wire.h>  // I2C: On Arduino Uno & Nano & ProMini use pins A4 for SDA (yellow/orange) and A5 for SCL (green). For other boards ee http://arduino.cc/en/Reference/Wire
+#include <RTClib.h>           // Include the RTClib library to enable communication with the real time clock.
+#include <Encoder.h>          // Include the Encoder library to read the outputs of the rotary encoders
 
 // Pin definitions:
 //    #define ARDUINO_NANO
@@ -27,6 +24,17 @@ struct CRGB _leds[startingLEDs+numLEDs];
           #define reedSwitchPin 3 // Switches off the display to reduce power consumption (before re-flashing)
         // Arduino Pro Mini i2c: SDA = A4, SCL = A5.    
     #endif
+
+#define startingLEDs 4 // Number of backlight LEDs BEFORE the strip
+#define numLEDs 60 // Number of LEDs in strip
+#define LEDOffset  30 // First LED in strip corresponds to 30-th second
+
+struct CRGB _leds[startingLEDs+numLEDs];
+
+Encoder rotary1 (rotaryLeft, rotaryRight); // Setting up the Rotary Encoder
+#define ROTARY_TICKS 4
+
+RTC_DS1307 RTC; // Establishes the chipset of the Real Time Clock
 
 DualFunctionButton button(menuPin, 1000, INPUT_PULLUP);
 
@@ -53,7 +61,7 @@ DualFunctionButton button(menuPin, 1000, INPUT_PULLUP);
         }
 // END CONVERSIONS
 
-int (*modeFuncArray[])(long) = {fColorDemo1, fColorDemo2, fColorDemo3};
+returnValue (*modeFuncArray[])(long) = {fColorDemo1, fColorDemo2, fColorDemo3};
 ModeChanger *intro = new ModeChanger (modeFuncArray, sizeof(modeFuncArray)/sizeof(modeFuncArray[0]));
 
 void setup () {
@@ -92,6 +100,31 @@ void initDevices (void) {
     LEDS.clear(true);
     
     Serial.begin (9600);
+
+    // Start RTC
+    Wire.begin(); // Arduino Pro Mini i2c: SDA = A4, SCL = A5.
+    if (!RTC.begin()) { // Starts communications to the RTC
+          Serial.println("Couldn't find RTC");
+    }
+    if (!RTC.isrunning()) {
+      Serial.println("RTC is NOT running!");
+      RTC.adjust(DateTime(F(__DATE__), F(__TIME__)));
+    }
+    //RTC.adjust(DateTime(F(__DATE__), F(__TIME__)));
+    DateTime now = RTC.now();
+    Serial.print("Hour time is... ");
+    Serial.println(now.hour());
+    Serial.print("Min time is... ");
+    Serial.println(now.minute());
+    Serial.print("Sec time is... ");
+    Serial.println(now.second());
+    
+    Serial.print("Year is... ");
+    Serial.println(now.year());
+    Serial.print("Month is... ");
+    Serial.println(now.month());
+    Serial.print("Day is... ");
+    Serial.println(now.day());
 }
 
 void readEEPROM (void) {}
@@ -99,7 +132,7 @@ void readEEPROM (void) {}
 /*extern uint8_t NeoPixel_sine8(uint8_t x);
 extern uint8_t NeoPixel_gamma8(uint8_t x);*/
 
-int fColorDemo1 (long currentCallNumber) {
+returnValue fColorDemo1 (long currentCallNumber) {
   static unsigned long millisAtStart;
   
   //Serial.println ("Mode: fColorDemo1");
@@ -121,7 +154,7 @@ int fColorDemo1 (long currentCallNumber) {
   if (deltaT >  9000) { wavelen = 20; timeStep =  2; };
   if (deltaT > 12000) { wavelen = 20; timeStep =  1; };
   if (deltaT > 15000) { wavelen = 20; direction = -1; };
-  if (deltaT > 18000) { LEDS.clear (); return 1; };
+  if (deltaT > 18000) { LEDS.clear (); return returnValue::NEXT; };
 
   //Serial.print ("deltaT: ");   Serial.println (deltaT);
 
@@ -132,10 +165,10 @@ int fColorDemo1 (long currentCallNumber) {
      //Serial.print (led); Serial.print (": "); Serial.println (firstBrightness); 
   }
   //delay (10000);
-  return 0;
+  return returnValue::CONTINUE;
 }
 
-int fColorDemo2 (long currentCallNumber) {
+returnValue fColorDemo2 (long currentCallNumber) {
   static unsigned long millisAtStart;
   
   //Serial.println ("Mode: fColorDemo2");
@@ -156,7 +189,7 @@ int fColorDemo2 (long currentCallNumber) {
   if (deltaT >  9000) {wavelen = 6; timeStep = 40; ledBrightness += 80;};
   if (deltaT > 12000) wavelen = 4;
   if (deltaT > 15000) {wavelen = 4; ledBrightness = 255;};
-  if (deltaT > 18000) { LEDS.clear (); return 1;};
+  if (deltaT > 18000) { LEDS.clear (); return returnValue::NEXT; };
 
 //  Serial.print ("deltaT: ");   Serial.println (deltaT);
 
@@ -178,10 +211,10 @@ int fColorDemo2 (long currentCallNumber) {
           //findLED(led-1)->b = 000;
       }
   }
-  return 0;
+  return returnValue::CONTINUE;
 }
 
-int fColorDemo3 (long currentCallNumber) {
+returnValue fColorDemo3 (long currentCallNumber) {
   static unsigned long millisAtStart;
   
   //Serial.println ("Mode: fColorDemo3");
@@ -198,11 +231,11 @@ int fColorDemo3 (long currentCallNumber) {
   int wavelen = 12;
 
   if (deltaT >  3000) wavelen = 10;
-  if (deltaT >  6000) {wavelen = 8; timeStep = 40; ledBrightness = 80;};
-  if (deltaT >  9000) {wavelen = 6; timeStep = 40; ledBrightness = 120;};
+  if (deltaT >  6000) { wavelen = 8; timeStep = 40; ledBrightness = 80; };
+  if (deltaT >  9000) { wavelen = 6; timeStep = 40; ledBrightness = 120; };
   if (deltaT > 12000) wavelen = 4;
-  if (deltaT > 15000) {wavelen = 4; ledBrightness = 255;};
-  if (deltaT > 18000) { LEDS.clear (); return 1;};
+  if (deltaT > 15000) { wavelen = 4; ledBrightness = 255; };
+  if (deltaT > 18000) { LEDS.clear (); return returnValue::NEXT; };
 
 //  Serial.print ("deltaT: ");   Serial.println (deltaT);
 
@@ -224,7 +257,7 @@ int fColorDemo3 (long currentCallNumber) {
           //findLED(led-1)->b = 000;
       }
   }
-  return 0;
+  return returnValue::CONTINUE;
 }
 
 //Input a value 0 to 384 to get a color value.
@@ -255,5 +288,25 @@ void backlightLEDs (void) {
     _leds[i].r = 5;
     _leds[i].b = 5;
   }
+}
+
+bool rotaryTurnLeft (void) {
+  static long lastRotary = 0;
+  int rotary1Pos = rotary1.read(); // Checks the rotary position
+
+  if (rotary1Pos <= -ROTARY_TICKS && (millis() - lastRotary) >= 1000) {
+      rotary1.write(0);
+      lastRotary = millis();
+  } 
+}
+
+bool rotaryTurnRight (void) {
+  static long lastRotary = 0;
+  int rotary1Pos = rotary1.read(); // Checks the rotary position
+
+  if (rotary1Pos >= ROTARY_TICKS && (millis() - lastRotary) >= 1000) {
+      rotary1.write(0);
+      lastRotary = millis();
+  } 
 }
 

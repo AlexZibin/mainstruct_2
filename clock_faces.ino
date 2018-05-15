@@ -4,7 +4,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////
 
 extern DateTime now;
-int (*clockFacesArray[])(long) = {minimalClock, basicClock, smoothSecond, outlineClock,   simplePendulum, breathingClock};
+returnValue (*clockFacesArray[])(long) = {minimalClock, basicClock, smoothSecond, outlineClock,   simplePendulum, breathingClock};
 ModeChanger clockFaces (clockFacesArray, sizeof(clockFacesArray)/sizeof(clockFacesArray[0]));
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -74,9 +74,9 @@ returnValue smoothSecond (long currentCallNumber) {
                   findLED(now.minute())->g = 255;
 
             // Second (5 lines of code)
-                  uint8_t delta = static_cast <uint8_t> (128F*(millis () - millisAtStart)/1000F);
-                  uint8_t secondBrightness1 = NeoPixel_gamma8(NeoPixel_sine8(( 64+delta)); // 64 means from Max to Min
-                  uint8_t secondBrightness2 = NeoPixel_gamma8(NeoPixel_sine8((192+delta)); // 192 means from Min to Max (same as sine8_0 ())
+                  uint8_t delta = static_cast <uint8_t> (128.0*(millis () - millisAtStart)/1000.0);
+                  uint8_t secondBrightness1 = NeoPixel_gamma8 (NeoPixel_sine8( 64+delta)); // 64 means from Max to Min
+                  uint8_t secondBrightness2 = NeoPixel_gamma8 (NeoPixel_sine8(192+delta)); // 192 means from Min to Max (same as sine8_0 ())
 
                   findLED(now.second ())->b =     secondBrightness1;
                   findLED(now.second () + 1)->b = secondBrightness2;    
@@ -158,7 +158,7 @@ returnValue simplePendulum (long currentCallNumber) {
         // Pendulum lights are set first, so hour/min/sec lights override and don't flicker as millisec passes
 
                 uint8_t deltaS = (((millis () - millisAtStart)*pendulumSpeed)%1000)/4;  // = 0..255
-                uint8_t pendulumPos = 30 + halfAmplitude - (2*halfAmplitude * static_cast <int> (sine8_0 (deltaS)))/256f; // = 38..22
+                uint8_t pendulumPos = 30 + halfAmplitude - (2*halfAmplitude * static_cast <int> (sine8_0 (deltaS)))/256.0; // = 38..22
 
                 findLED(pendulumPos)->r = 100;
                 findLED(pendulumPos)->g = 100;
@@ -210,85 +210,44 @@ returnValue breathingClock (long currentCallNumber) {
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Time adjustment routines
-//returnValue (*_timeAdjustmentRoutines[])(long) = {adjustHours, adjustMinutes, adjustSeconds};
-//ModeChanger timeAdjustmentRoutines (_timeAdjustmentRoutines, sizeof(_timeAdjustmentRoutines)/sizeof(_timeAdjustmentRoutines[0]));
 
-void adjustTime () {
-    static uint8_t h (now.hour ());
-    static uint8_t m (now.minute ());
-    static uint8_t s (now.second ());
-    
-    if (!currentCallNumber) {
-        h = now.hour ();
-        m = now.minute ();
-        s = now.second ();
+bool adjustTime () {
+    static int adjustmentStep; // 60*60 for hours, 60 for minutes, 1 for seconds
+    static int deltaSeconds;
+    static Timer timer;
+
+    if (!timer.isOn ()) { // First-time entry
         timer.setInterval ("ms", 10000); // Adjustment will be aborted after 10 seconds without user's activity
         timer.switchOn ();
-    } else {
-        if (button.shortPress()) {
 
-    int dh, dm, ds;
-    splitHMS (deltaSeconds, dh, dm, ds);
-            
-            RTC.adjust (DateTime (now.year (), now.month (), now.day (), h, m, s));
-            return returnValue::NEXT;
-        }
-        if (button.longPress() || timer.needToTrigger()) { // Adjustment will be aborted 
-            return returnValue::TERMINATE;
-        }
-    
+        deltaSeconds = 0;
+        adjustmentStep = 3600; // HOURS = 60*60
+    } else {
         if (rotaryTurnLeft ()) {
-            if (--h < 0 ) h = 23;
-            timer.switchOn (); // user's activity - no termination is necessary
+            deltaSeconds -= adjustmentStep;
+            timer.switchOn (); // user's activity - no termination is necessary, restore 10 seconds timeout
         }    
         if (rotaryTurnRight ()) {
-            if (++h > 23 ) h = 0;
+            deltaSeconds += adjustmentStep; // HOURS -> MINUTES -> SECONDS
             timer.switchOn ();
         }    
-        drawAdjustmentClock (h, m, s);
+        if (button.shortPress()) {
+            int dh, dm, ds;
+            splitHMS (deltaSeconds, dh, dm, ds);
+            RTC.adjust (DateTime (now.year (), now.month (), now.day (), dh, dm, ds));
+
+            if (adjustmentStep == 1) return true; // work done
+            adjustmentStep /= 60;
+        }
+        if (button.longPress() || timer.needToTrigger()) { // Adjustment will be aborted 
+            timer.switchOff ();
+            return true; // no adjustments saved
+        }
+        drawAdjustmentClock (deltaSeconds);
     }
-    return returnValue::CONTINUE;
+    return false; // continue next loop
 }
                                          
-returnValue adjustMinutes (long currentCallNumber) {
-    static uint8_t h (now.hour ());
-    static uint8_t m (now.minute ());
-    static uint8_t s (now.second ());
-    
-    if (!currentCallNumber) {
-        h = now.hour ();
-        m = now.minute ();
-        s = now.second ();
-        timer.setInterval ("ms", 10000); // Adjustment will be aborted after 10 seconds without user's activity
-        timer.switchOn ();
-    } else {
-        if (button.shortPress()) {
-            RTC.adjust (DateTime (now.year (), now.month (), now.day (), h, m, s));
-            return returnValue::NEXT;
-        }
-        if (button.longPress() || timer.needToTrigger()) { // Adjustment will be aborted 
-            return returnValue::TERMINATE;
-        }
-    
-        if (rotaryTurnLeft ()) {
-            if (--m < 0 ) {
-                m = 59;
-                if (--h < 0 ) h = 23;
-            }
-            timer.switchOn (); // user's activity - no termination is necessary
-        }    
-        if (rotaryTurnRight ()) {
-            if (++m > 59 ) {
-                m = 0;
-                if (++h > 23 ) h = 0;
-            }
-            timer.switchOn ();
-        }    
-        drawAdjustmentClock (h, m, s);
-    }
-    return returnValue::CONTINUE;
-}
-
 void drawAdjustmentClock (int deltaSeconds) {
     
     for (int i = 0; i < numLEDs; i += numLEDs/12) { // 60/12 = 5
@@ -303,7 +262,7 @@ void drawAdjustmentClock (int deltaSeconds) {
     // Hour (3 lines of code)
           uint8_t hourPos = _hourPos (dh, dm);
           findLED (hourPos)->r  = 190;
-          if (h >= 12) 
+          if (dh >= 12) 
               findLED (hourPos-1)->r = findLED(hourPos+1)->r = 30;
 
     // Minute  
@@ -342,45 +301,5 @@ void splitHMS (int deltaSeconds, int &dh, int &dm, int &ds) {
     while (dh >= 24) dh -= 24;
     while (dh < 0) dh += 24;
 }
-                                                              
-/*
-returnValue adjustSeconds (long currentCallNumber) {
-    static int dh;
-    static int dm;
-    static int ds;
-    
-    if (!currentCallNumber) {
-        dh = 0;
-        dm = 0;
-        ds = 0;
-        timer.setInterval ("ms", 10000); // Adjustment will be aborted after 10 seconds without user's activity
-        timer.switchOn ();
-    } else {
-        if (button.shortPress()) {
-            RTC.adjust (DateTime (now.year (), now.month (), now.day (), now.hour () + dh, now.minute () + dm, now.second () + ds));
-            return returnValue::NEXT;
-        }
-        if (button.longPress() || timer.needToTrigger()) { // Adjustment will be aborted 
-            return returnValue::TERMINATE;
-        }
-    
-        if (rotaryTurnLeft ()) {
-            if (--s < 0 ) {
-                s = 59;
-                if (--m < 0 ) m = 59;
-            }
-            timer.switchOn (); // user's activity - no termination is necessary
-        }    
-        if (rotaryTurnRight ()) {
-            if (++s > 59 ) {
-                s = 0;
-                if (++m > 59 ) m = 0;
-            }
-            timer.switchOn ();
-        }    
-        drawAdjustmentClock (h, m, s);
-    }
-    return returnValue::CONTINUE;
-}
 
-*/
+
