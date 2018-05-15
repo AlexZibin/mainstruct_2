@@ -20,16 +20,12 @@ void minimalClock (long currentCallNumber) {
 void basicClock(long currentCallNumber) {
   uint8_t hourPos = _hourPos (now.hour(), now.minute());
 
-  // Hour (9 lines of code)
-          findLED(hourPos-1)->r = 30;
-          findLED(hourPos-1)->g =  0;
-          findLED(hourPos-1)->b =  0;
+  // Hour (6 lines of code)
+          findLED(hourPos-1)->r = findLED(hourPos+1)->r = 30;
+          findLED(hourPos-1)->g = findLED(hourPos+1)->g = 0;
+          findLED(hourPos-1)->b = findLED(hourPos+1)->b = 0;
 
-          findLED(hourPos+1)->r = 30;
-          findLED(hourPos+1)->g =  0;
-          findLED(hourPos+1)->b =  0;
-
-          findLED(hourPos)->r  = 190;
+          findLED(hourPos)->r  = 200;
           findLED(hourPos)->g  =   0;
           findLED(hourPos)->b  =   0;
   
@@ -47,12 +43,23 @@ void basicClock(long currentCallNumber) {
 //////////////////////////////////////////////////////////////////////////////////////////
 void smoothSecond (long currentCallNumber) {
     static unsigned long millisAtStart;
+    static DateTime oldTime;
+    static bool catchSeconds;
+    //unsigned long deltaT = millis () - millisAtStart;
+    uint8_t secondBrightness1, secondBrightness2;
+  
     if (currentCallNumber == 0) {
-        millisAtStart = millis ();
+        //millisAtStart = millis ();
+        oldTime = RTC.now();
+        catchSeconds = false;
     }
-    unsigned long deltaT = millis () - millisAtStart;
-    uint_8_t secondBrightness1, secondBrightness2;
-
+    
+    if (!catchSeconds) {  // Don't show seconds, wait for catching the beginning of new second
+        if (now.second () > oldTime.second ())
+            catchSeconds = true;
+    } else {              // Usual operation
+        
+    }
 
     if (now.second()!=old.second()) {
       old = now;
