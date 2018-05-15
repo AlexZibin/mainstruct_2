@@ -296,18 +296,42 @@ void drawAdjustmentClock (int deltaSeconds) {
     int dh = deltaSeconds / 3600;
     int dm = (deltaSeconds - dh * 3600) / 60;
     int ds = (deltaSeconds - dh * 3600 - dm * 60);
+    
+    dh += now.hour ();
+    while (dh >= 24) dh -= 24;
+    while (dh < 0) dh += 24;
 
+    dm += now.minute ();
+    while (dm >= 60) {
+        dm -= 60;
+        dh += 1;
+    }
+    while (dm < 0) {
+        dm += 60;
+        dh -= 1;
+    }
+    
+    ds += now.second ();
+    while (ds >= 60) {
+        ds -= 60;
+        dm += 1;
+    }
+    while (ds < 0) {
+        ds += 60;
+        dm -= 1;
+    }
+    
     // Hour (3 lines of code)
-          uint8_t hourPos = _hourPos (now.hour(), now.minute());
+          uint8_t hourPos = _hourPos (dh, dm);
           findLED (hourPos)->r  = 190;
           if (h >= 12) 
               findLED (hourPos-1)->r = findLED(hourPos+1)->r = 30;
 
     // Minute  
-          findLED (m)->g = 255;
+          findLED (dm)->g = 255;
 
     // Second  
-          findLED (s)->b = 255;
+          findLED (ds)->b = 255;
 }
 
 /*
