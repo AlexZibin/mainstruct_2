@@ -139,9 +139,8 @@ void initDevices (void) {
 
 void readEEPROM (void) {}
 
-/*extern uint8_t NeoPixel_sine8(uint8_t x);
-extern uint8_t NeoPixel_gamma8(uint8_t x);*/
-
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
 returnValue fColorDemo1 (long currentCallNumber) {
   static unsigned long millisAtStart;
   
@@ -159,26 +158,31 @@ returnValue fColorDemo1 (long currentCallNumber) {
   int direction = 1;
   float wavelen = 20.0;
 
-  if (deltaT >  3000) { wavelen = 20; timeStep =  4; };
+  /*if (deltaT >  3000) { wavelen = 20; timeStep =  4; };
   if (deltaT >  6000) { wavelen = 20; timeStep =  3; };
   if (deltaT >  9000) { wavelen = 20; timeStep =  2; };
   if (deltaT > 12000) { wavelen = 20; timeStep =  1; };
-  if (deltaT > 15000) { wavelen = 20; direction = -1; };
+  if (deltaT > 15000) { wavelen = 20; direction = -1; };*/
   if (deltaT > 18000) { LEDS.clear (); return returnValue::NEXT; };
 
   //Serial.print ("deltaT: ");   Serial.println (deltaT);
 
   for (int led = 0; led < numLEDs; led++) {
 //     uint8_t firstBrightness = NeoPixel_gamma8(NeoPixel_sine8(static_cast<uint8_t>(deltaT/timeStep-direction*led*wavelen)%256));
-     uint8_t firstBrightness = sine8_0 ((deltaT/timeStep-direction*led*wavelen*(1-deltaT/36000.0))%256);
+//     uint8_t firstBrightness = sine8_0 ((deltaT/timeStep-direction*led*wavelen)%256);
+     uint8_t firstBrightness = sine8_0 ((deltaT/timeStep/(1-deltaT/24000.0)-direction*led*wavelen*(1-deltaT/36000.0))%256);
+     uint8_t firstBrightnessB = sine8_0 ((deltaT/timeStep/(1-deltaT/20000.0)+direction*led*wavelen*(1-deltaT/36000.0))%256);
      
      const float shade = 10;
      if (led < shade) {      
           findLED(led)->r = NeoPixel_gamma8(firstBrightness*(led/shade));
+          findLED(led)->b = NeoPixel_gamma8(firstBrightnessB*(led/shade));
      } else if (led >= numLEDs - shade) {      
           findLED(led)->r = NeoPixel_gamma8(firstBrightness*((numLEDs-led)/shade));
+          findLED(led)->b = NeoPixel_gamma8(firstBrightnessB*((numLEDs-led)/shade));
      } else
           findLED(led)->r = NeoPixel_gamma8(firstBrightness);
+          findLED(led)->b = NeoPixel_gamma8(firstBrightnessB);
      //Serial.print (led); Serial.print (": "); Serial.println (firstBrightness); 
   }
   //delay (10000);
