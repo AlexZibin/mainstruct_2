@@ -61,7 +61,7 @@ DualFunctionButton button(menuPin, 1000, INPUT_PULLUP);
         }
 // END CONVERSIONS
 
-returnValue (*modeFuncArray[])(long) = {fColorDemo1, fColorDemo2, fColorDemo3};
+returnValue (*modeFuncArray[])(long) = {fColorDemo1, fColorDemo2};
 ModeChanger *intro = new ModeChanger (modeFuncArray, sizeof(modeFuncArray)/sizeof(modeFuncArray[0]));
 
 void setup () {
@@ -141,6 +141,55 @@ void readEEPROM (void) {}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+returnValue fColorDemo2 (long currentCallNumber) {
+  static unsigned long millisAtStart;
+  
+  if (currentCallNumber == 0) {
+      millisAtStart = millis ();
+      for (int led = 0; led < numLEDs; led++) { // Don't erase digits
+          findLED(led)->r = 0;
+          findLED(led)->g = 0;
+          findLED(led)->b = 0;
+      }
+  }
+  
+  unsigned long deltaT = millis () - millisAtStart;
+  unsigned long timeStep = 5;
+  int direction = -1;
+  float wavelen = 10.0;
+
+  if (deltaT > 20000) { LEDS.clear (); return returnValue::NEXT; };
+
+  static float ledBrightness;
+  byte r, g, b;
+  Wheel ((deltaT/15)%384, r, g, b);
+  for (int led = 0; led < numLEDs; led++) {
+      uint8_t firstBrightness = sine8_0 (static_cast<uint8_t>(deltaT/timeStep/(1-deltaT/48000.0)-direction*led*wavelen*(1+deltaT/22000.0))%256);
+     
+      float brt;
+      if (deltaT <= 3000.0) ledBrightness = deltaT/3000.0;
+      const float shade = 5;
+      if (led < shade) {      
+          brt = NeoPixel_gamma8(firstBrightness*(led/shade)*ledBrightness)/128.0;
+          findLED(led)->r = brt*r;
+          findLED(led)->g = brt*g;
+          findLED(led)->b = brt*b;
+      } else if (led >= numLEDs - shade) {      
+          brt = NeoPixel_gamma8(firstBrightness*((numLEDs-led)/shade)*ledBrightness)/128.0;
+          findLED(led)->r = brt*r;
+          findLED(led)->g = brt*g;
+          findLED(led)->b = brt*b;
+      } else {
+          brt = NeoPixel_gamma8(firstBrightness*ledBrightness)/128.0;
+          findLED(led)->r = brt*r;
+          findLED(led)->g = brt*g;
+          findLED(led)->b = brt*b;
+      }
+  }
+
+  return returnValue::CONTINUE;
+}
+
 returnValue fColorDemo1 (long currentCallNumber) {
   static unsigned long millisAtStart;
   
@@ -149,47 +198,59 @@ returnValue fColorDemo1 (long currentCallNumber) {
   
   if (currentCallNumber == 0) {
       millisAtStart = millis ();
-      //LEDS.clear(true);
+      LEDS.clear(true);
   }
   
   unsigned long deltaT = millis () - millisAtStart;
   unsigned long timeStep = 5;
-  float ledBrightness = 0.8;
   int direction = 1;
-  float wavelen = 20.0;
+  float wavelen = 10.0;
 
   /*if (deltaT >  3000) { wavelen = 20; timeStep =  4; };
   if (deltaT >  6000) { wavelen = 20; timeStep =  3; };
   if (deltaT >  9000) { wavelen = 20; timeStep =  2; };
   if (deltaT > 12000) { wavelen = 20; timeStep =  1; };
   if (deltaT > 15000) { wavelen = 20; direction = -1; };*/
-  if (deltaT > 18000) { LEDS.clear (); return returnValue::NEXT; };
+  if (deltaT > 20000) { /*LEDS.clear (); */return returnValue::NEXT; };
 
   //Serial.print ("deltaT: ");   Serial.println (deltaT);
 
+  static float ledBrightness;
   for (int led = 0; led < numLEDs; led++) {
 //     uint8_t firstBrightness = NeoPixel_gamma8(NeoPixel_sine8(static_cast<uint8_t>(deltaT/timeStep-direction*led*wavelen)%256));
 //     uint8_t firstBrightness = sine8_0 ((deltaT/timeStep-direction*led*wavelen)%256);
-     uint8_t firstBrightness = sine8_0 ((deltaT/timeStep/(1-deltaT/24000.0)-direction*led*wavelen*(1-deltaT/36000.0))%256);
-     uint8_t firstBrightnessB = sine8_0 ((deltaT/timeStep/(1-deltaT/20000.0)+direction*led*wavelen*(1-deltaT/36000.0))%256);
+     uint8_t firstBrightness = sine8_0 (static_cast<uint8_t>(deltaT/timeStep/(1-deltaT/48000.0)-direction*led*wavelen*(1+deltaT/22000.0))%256);
+     uint8_t firstBrightnessB = sine8_0 (static_cast<uint8_t>(deltaT/timeStep/(1-deltaT/58000.0)+direction*led*wavelen*(1-deltaT/76000.0))%256);
+//     uint8_t firstBrightnessB = sine8_0 (static_cast<uint8_t>(deltaT/timeStep/(1-deltaT/20000.0)+direction*led*wavelen*(1-deltaT/36000.0))%256);
      
-     const float shade = 10;
+     if (deltaT <= 3000.0) ledBrightness = deltaT/3000.0;
+     const float shade = 5;
      if (led < shade) {      
-          findLED(led)->r = NeoPixel_gamma8(firstBrightness*(led/shade));
-          findLED(led)->b = NeoPixel_gamma8(firstBrightnessB*(led/shade));
+          findLED(led)->b = NeoPixel_gamma8(firstBrightness*(led/shade)*ledBrightness);
+          //findLED(led)->b = NeoPixel_gamma8(firstBrightnessB*(led/shade)/4);
      } else if (led >= numLEDs - shade) {      
-          findLED(led)->r = NeoPixel_gamma8(firstBrightness*((numLEDs-led)/shade));
-          findLED(led)->b = NeoPixel_gamma8(firstBrightnessB*((numLEDs-led)/shade));
+          findLED(led)->b = NeoPixel_gamma8(firstBrightness*((numLEDs-led)/shade)*ledBrightness);
+          //findLED(led)->b = NeoPixel_gamma8(firstBrightnessB*((numLEDs-led)/shade)/4);
      } else
-          findLED(led)->r = NeoPixel_gamma8(firstBrightness);
-          findLED(led)->b = NeoPixel_gamma8(firstBrightnessB);
+          findLED(led)->b = NeoPixel_gamma8(firstBrightness*ledBrightness);
+          //findLED(led)->b = NeoPixel_gamma8(firstBrightnessB/4);
      //Serial.print (led); Serial.print (": "); Serial.println (firstBrightness); 
   }
-  //delay (10000);
+
+  byte r, g, b;
+  static float ledBrightness2;
+  if (deltaT <= 16000.0) ledBrightness2 = deltaT/16000.0;
+  Wheel ((deltaT/15)%384, r, g, b);
+  for (int i = 0; i < startingLEDs; i++) {
+      _leds[i].r = r*2*ledBrightness2;
+      _leds[i].g = g*2*ledBrightness2;
+      _leds[i].b = b*2*ledBrightness2;
+  }
+
   return returnValue::CONTINUE;
 }
 
-returnValue fColorDemo2 (long currentCallNumber) {
+returnValue fColorDemo4 (long currentCallNumber) {
   static unsigned long millisAtStart;
   
   //Serial.println ("Mode: fColorDemo2");
@@ -305,9 +366,9 @@ void Wheel (uint16_t WheelPos, byte &r, byte &g, byte &b) {
 
 void backlightLEDs (void) {
   for (int i = 0; i < startingLEDs; i++) {
-    _leds[i].g = 255;
+    _leds[i].g = 5;
     _leds[i].r = 5;
-    _leds[i].b = 5;
+    _leds[i].b = 255;
   }
 }
 
