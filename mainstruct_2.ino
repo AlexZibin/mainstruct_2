@@ -140,14 +140,14 @@ returnValue fColorDemo1 (long currentCallNumber) {
   
   if (currentCallNumber == 0) {
       millisAtStart = millis ();
-      LEDS.clear(true);
+      //LEDS.clear(true);
   }
   
   unsigned long deltaT = millis () - millisAtStart;
   unsigned long timeStep = 5;
   float ledBrightness = 0.8;
   int direction = 1;
-  int wavelen = 20;
+  float wavelen = 20.0;
 
   if (deltaT >  3000) { wavelen = 20; timeStep =  4; };
   if (deltaT >  6000) { wavelen = 20; timeStep =  3; };
@@ -160,8 +160,15 @@ returnValue fColorDemo1 (long currentCallNumber) {
 
   for (int led = 0; led < numLEDs; led++) {
 //     uint8_t firstBrightness = NeoPixel_gamma8(NeoPixel_sine8(static_cast<uint8_t>(deltaT/timeStep-direction*led*wavelen)%256));
-     uint8_t firstBrightness = NeoPixel_gamma8(NeoPixel_sine8((deltaT/timeStep-direction*led*wavelen)%256));
-     findLED(led)->r = firstBrightness;
+     uint8_t firstBrightness = sine8_0 ((deltaT/timeStep-direction*led*wavelen*(1-deltaT/36000.0))%256);
+     
+     const float shade = 10;
+     if (led < shade) {      
+          findLED(led)->r = NeoPixel_gamma8(firstBrightness*(led/shade));
+     } else if (led >= numLEDs - shade) {      
+          findLED(led)->r = NeoPixel_gamma8(firstBrightness*((numLEDs-led)/shade));
+     } else
+          findLED(led)->r = NeoPixel_gamma8(firstBrightness);
      //Serial.print (led); Serial.print (": "); Serial.println (firstBrightness); 
   }
   //delay (10000);
