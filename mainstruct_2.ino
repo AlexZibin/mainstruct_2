@@ -80,6 +80,16 @@ void loop () {
     //mode->applyMode (fColorDemo10sec);
     now = RTC.now();
     intro->loopThruModeFunc (100);
+    
+    /*
+    clockFaces.applyCurrFunc();
+    if (rotaryTurnLeft) clockFaces.prevMode();
+    if (rotaryTurnLeft) clockFaces.nextMode();
+    if (button.longPress() clockFaces.changeCtlArray (_adjustTime);
+        To-DO:  1) Add function pointer to afterLoopCtlFunction to ModeChanger class.
+                This function will handle button presses and encoder specifically.
+                2) Add ModeChanger::changeCtlArray (): _fptr = newFunc.
+    */
 
     if (button.shortPress()) {
       Serial.println (++numPresses);
