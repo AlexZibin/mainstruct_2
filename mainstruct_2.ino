@@ -82,8 +82,6 @@ returnValue energySaver (long currentCallNumber) {
 
 
 
-
-
 void setup () {
   initDevices ();
   readEEPROM ();
@@ -91,36 +89,14 @@ void setup () {
   Serial.println ("\n\nStarting...");
 }
 
-int numPresses = 0;
+//int numPresses = 0;
 
 DateTime now;
+ModeChanger modeChanger (shortIntroControlStruct);
 
 void loop () {
     now = RTC.now();
-    
-    ModeChanger modeChanger (shortIntroControlStruct);
     modeChanger.loopThruModeFunc ();
-    
-    /*
-    clockFaces.applyCurrFunc();
-    if (rotaryTurnLeft) clockFaces.prevMode();
-    if (rotaryTurnLeft) clockFaces.nextMode();
-    if (button.longPress() clockFaces.changeCtlArray (_adjustTime);
-        To-DO:  1) Add function pointer to afterLoopCtlFunction to ModeChanger class.
-                This function will handle button presses and encoder specifically.
-                2) Add ModeChanger::changeCtlArray (): _fptr = newFunc.
-    */
-
-    if (button.shortPress()) {
-        Serial.println (++numPresses);
-        Serial.println ("intro->nextMode();");
-        intro->nextMode();
-    }
-    if (button.longPress()) {
-        Serial.println ("intro->applyMode (fColorDemo1);");
-        intro->applyMode (fColorDemo1);
-    }
-    //backlightLEDs ();
     LEDS.show ();
 }
 
@@ -132,13 +108,13 @@ void initDevices (void) {
     Serial.begin (9600);
 
     // Start RTC
-    Wire.begin(); // Arduino Pro Mini i2c: SDA = A4, SCL = A5.
-    if (!RTC.begin()) { // Starts communications to the RTC
-          Serial.println("Couldn't find RTC");
+    Wire.begin (); // Arduino Pro Mini i2c: SDA = A4, SCL = A5.
+    if (!RTC.begin ()) { // Starts communications to the RTC
+        Serial.println("Couldn't find RTC");
     }
-    if (!RTC.isrunning()) {
-      Serial.println("RTC is NOT running!");
-      RTC.adjust(DateTime(F(__DATE__), F(__TIME__)));
+    if (!RTC.isrunning ()) {
+        Serial.println("RTC is NOT running!");
+        RTC.adjust(DateTime(F(__DATE__), F(__TIME__)));
     }
     //RTC.adjust(DateTime(F(__DATE__), F(__TIME__)));
     DateTime now = RTC.now();
@@ -156,6 +132,15 @@ void initDevices (void) {
     Serial.print("Day is... ");
     Serial.println(now.day());
 }
+
+
+/////////////////////////////////////// EEPROM
+uint16_t correctMagicValue = 0xEFD3;
+struct EEPROMdata {
+    uint16_t magicValue;
+    int currentClockFace;
+    
+};
 
 void readEEPROM (void) {}
 
