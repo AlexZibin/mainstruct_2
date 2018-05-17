@@ -62,7 +62,8 @@ DualFunctionButton button(menuPin, 1000, INPUT_PULLUP);
 // END CONVERSIONS
 
 returnValue (*modeFuncArray[])(long) = {fColorDemo1, fColorDemo2};
-ModeChanger *intro = new ModeChanger (modeFuncArray, sizeof(modeFuncArray)/sizeof(modeFuncArray[0]));
+const int len_modeFuncArray = sizeof(modeFuncArray)/sizeof(modeFuncArray[0]);
+//ModeChanger *intro = new ModeChanger (modeFuncArray, len_modeFuncArray);
 
 void setup () {
   initDevices ();
@@ -76,10 +77,10 @@ int numPresses = 0;
 DateTime now;
 
 void loop () {
-    //static long _currentCallNumber = 0;
-    //mode->applyMode (fColorDemo10sec);
     now = RTC.now();
-    intro->loopThruModeFunc (100);
+    
+    ModeChanger modeChanger (modeFuncArray, len_modeFuncArray);
+    modeChanger.loopThruModeFunc (30);
     
     /*
     clockFaces.applyCurrFunc();
