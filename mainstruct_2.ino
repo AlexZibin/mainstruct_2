@@ -61,42 +61,50 @@ DualFunctionButton button (menuPin, 1000, INPUT_PULLUP);
         }
 // END CONVERSIONS
 
+extern ControlStruct clockFacesControlStruct;
+extern ControlStruct energySaverControlStruct;
 /////// shortIntroControlStruct ///////
 returnValue (*introFuncArray[])(long) = {fColorDemo1, fColorDemo2};
 const int len_introFuncArray = sizeof(introFuncArray)/sizeof(introFuncArray[0]);
 ControlStruct shortIntroControlStruct {introFuncArray, len_introFuncArray, nullptr, 
-                                       LoopMode::ONCE, clockFacesControlStruct, energySaverControlStruct};
+                                       LoopMode::ONCE, &clockFacesControlStruct, &energySaverControlStruct};
 
 /////// energySaverControlStruct ///////
 returnValue (*energySaverFuncArray[])(long) = {energySaver};
 const int len_energySaverFuncArray = sizeof(energySaverFuncArray)/sizeof(energySaverFuncArray[0]);
-ControlStruct shortIntroControlStruct {len_energySaverFuncArray, len_energySaverFuncArray, nullptr, 
-                                       LoopMode::ONCE, shortIntroControlStruct, shortIntroControlStruct};
+ControlStruct energySaverControlStruct {energySaverFuncArray, len_energySaverFuncArray, nullptr, 
+                                       LoopMode::ONCE, &shortIntroControlStruct, &shortIntroControlStruct};
 
 returnValue energySaver (long currentCallNumber) {
     LEDS.clear ();
-    findLED(led)->b = NeoPixel_gamma8 (sine8_0 ((millis()/5)%256)/2);
+    findLED(0)->b = NeoPixel_gamma8 (sine8_0 ((millis()/5)%256)/2);
     //findLED(led)->r = findLED(led)->g = findLED(led)->b = NeoPixel_gamma8 (sine8_0 ((millis()/5)%256)/2);
     return returnValue::CONTINUE;
 }
 
 
+ModeChanger *modeChanger;
 
 void setup () {
-  initDevices ();
-  readEEPROM ();
-
-  Serial.println ("\n\nStarting...");
+    initDevices ();
+    readEEPROM ();
+    
+    Serial.println ("\n\nStarting...");
+    modeChanger = new ModeChanger (&shortIntroControlStruct);
 }
 
-//int numPresses = 0;
+int num = 0;
 
 DateTime now;
-ModeChanger modeChanger (shortIntroControlStruct);
 
 void loop () {
+    /*Serial.print ("\n\nLoop ");
+    Serial.println (++num);
+    delay (1000);*/
+    
     now = RTC.now();
-    modeChanger.loopThruModeFunc ();
+    LEDS.clear ();
+    modeChanger->loopThruModeFunc ();
     backlightLEDs ();
     LEDS.show ();
 }
@@ -149,7 +157,7 @@ void readEEPROM (void) {
     
     
     
-    if (eepromData.magicValue <> correctMagicValue) { EEPROM is blank
+    if (eepromData.magicValue != correctMagicValue) { // EEPROM is blank
         eepromData.magicValue = correctMagicValue;
         eepromData.currentClockFace = 0;
         //eepromData.lastClockCorrection

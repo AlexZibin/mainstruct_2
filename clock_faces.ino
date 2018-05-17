@@ -3,11 +3,14 @@
 //   Add any new display mode functions here.
 ////////////////////////////////////////////////////////////////////////////////////////////
 
+extern ControlStruct adjustTimeControlStruct;
+
 returnValue (*clockFacesArray[])(long) = {minimalClock, spacerShortDemo, basicClock, spacerShortDemo, 
                                           smoothSecond, spacerShortDemo, outlineClock,   simplePendulum, breathingClock};
 const int len_clockFacesArray = sizeof (clockFacesArray) / sizeof (clockFacesArray[0]);
 ControlStruct clockFacesControlStruct {clockFacesArray, len_clockFacesArray, nullptr, 
-                                       LoopMode::INFINITE, longDemoControlStruct, adjustTimeControlStruct};
+//                                       LoopMode::INFINITE, &longDemoControlStruct, &adjustTimeControlStruct};
+                                       LoopMode::INFINITE, &shortIntroControlStruct, &adjustTimeControlStruct};
 /*    fPtr *funcArray;
     int funcArrayLen;
     fPtr endingFunction;
@@ -224,8 +227,8 @@ returnValue breathingClock (long currentCallNumber) {
 // Time adjustment routines
 returnValue (*adjustTimeArray[])(long) = {adjustTime};
 const int len_adjustTimeArray = 1;
-ControlStruct clockFacesControlStruct {adjustTimeArray, len_adjustTimeArray, nullptr, 
-                                       LoopMode::INFINITE, nullptr, clockFacesControlStruct};
+ControlStruct adjustTimeControlStruct {adjustTimeArray, len_adjustTimeArray, nullptr, 
+                                       LoopMode::INFINITE, nullptr, &clockFacesControlStruct};
 
 returnValue adjustTime (long currentCallNumber) {
     static int adjustmentStep; // 60*60 for hours, 60 for minutes, 1 for seconds
