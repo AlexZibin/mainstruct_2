@@ -4,7 +4,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////
 
 returnValue (*clockFacesArray[])(long) = {minimalClock, basicClock, smoothSecond, outlineClock,   simplePendulum, breathingClock};
-const int len_clockFacesArray = sizeof(clockFacesArray)/sizeof(clockFacesArray[0]);
+const int len_clockFacesArray = sizeof (clockFacesArray) / sizeof (clockFacesArray[0]);
 ControlStruct clockFacesControlStruct {clockFacesArray, len_clockFacesArray, nullptr, 
                                        LoopMode::INFINITE, longDemoControlStruct, adjustTimeControlStruct};
 /*    fPtr *funcArray;
