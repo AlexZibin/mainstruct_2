@@ -251,13 +251,13 @@ returnValue adjustTime (long currentCallNumber) {
             splitHMS (deltaSeconds, dh, dm, ds);
             RTC.adjust (DateTime (now.year (), now.month (), now.day (), dh, dm, ds));
 
-            if (adjustmentStep == 1) return returnValue::TERMINATE; // work done
+            if (adjustmentStep == 1) return returnValue::SHORTPRESS; // work done
             adjustmentStep /= 60;
         }
         if (timer.needToTrigger()) { // Adjustment will be aborted 
 //        if (button.longPress() || timer.needToTrigger()) { // Adjustment will be aborted 
             timer.switchOff ();
-            return true; // no adjustments saved
+            return returnValue::LONGPRESS; // no adjustments saved
         }
         drawAdjustmentClock (deltaSeconds);
     }
