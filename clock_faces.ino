@@ -3,7 +3,8 @@
 //   Add any new display mode functions here.
 ////////////////////////////////////////////////////////////////////////////////////////////
 
-returnValue (*clockFacesArray[])(long) = {minimalClock, basicClock, smoothSecond, outlineClock,   simplePendulum, breathingClock};
+returnValue (*clockFacesArray[])(long) = {minimalClock, spacerShortDemo, basicClock, spacerShortDemo, 
+                                          smoothSecond, spacerShortDemo, outlineClock,   simplePendulum, breathingClock};
 const int len_clockFacesArray = sizeof (clockFacesArray) / sizeof (clockFacesArray[0]);
 ControlStruct clockFacesControlStruct {clockFacesArray, len_clockFacesArray, nullptr, 
                                        LoopMode::INFINITE, longDemoControlStruct, adjustTimeControlStruct};
@@ -316,4 +317,60 @@ void splitHMS (int deltaSeconds, int &dh, int &dm, int &ds) {
     dh += now.hour ();
     while (dh >= 24) dh -= 24;
     while (dh < 0) dh += 24;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+returnValue spacerShortDemo (long currentCallNumber) {
+    static unsigned long millisAtStart;
+    const long playTimeMs = 1000;
+
+    if (currentCallNumber == 0) {
+        millisAtStart = millis ();
+        for (int led = 0; led < numLEDs; led++) { // Don't erase starting LEDs (digits 3-6-9-12)
+            findLED(led)->r = 0;
+            findLED(led)->g = 0;
+            findLED(led)->b = 0;
+        }
+    }
+
+    unsigned long deltaT = millis () - millisAtStart;
+    unsigned long timeStep = 1;
+    int direction = -1;
+    float wavelen = 10.0;
+
+    if (deltaT > playTimeMs) { LEDS.clear (); return returnValue::NEXT; };
+
+    static float ledBrightness;
+    byte r, g, b;
+    Wheel ((deltaT/15)%384, r, g, b);
+    for (int led = 0; led < numLEDs; led++) {
+        uint8_t firstBrightness = sine8_0 (static_cast<uint8_t>(deltaT/timeStep/(1-deltaT/(playTimeMs*2.1))
+                                                                -direction*led*wavelen*(1+deltaT/(playTimeMs+4000.0)))%256);
+        
+        // dimming at the beginning of demo and in the end:
+        const float dimmingTimeMs = 500.0;
+        if (deltaT <= dimmingTimeMs) ledBrightness = deltaT/dimmingTimeMs;
+        if (deltaT >= playTimeMs-dimmingTimeMs) ledBrightness = (playTimeMs-deltaT)/dimmingTimeMs;
+        
+        float brt;
+        const float shade = 5;
+        if (led < shade) {      // gimming LEDs near 12 o'clock
+            brt = NeoPixel_gamma8(firstBrightness*(led/shade)*ledBrightness)/128.0;
+            findLED(led)->r = brt*r;
+            findLED(led)->g = brt*g;
+            findLED(led)->b = brt*b;
+        } else if (led >= numLEDs - shade) {      
+            brt = NeoPixel_gamma8(firstBrightness*((numLEDs-led)/shade)*ledBrightness)/128.0;
+            findLED(led)->r = brt*r;
+            findLED(led)->g = brt*g;
+            findLED(led)->b = brt*b;
+        } else {
+            brt = NeoPixel_gamma8(firstBrightness*ledBrightness)/128.0;
+            findLED(led)->r = brt*r;
+            findLED(led)->g = brt*g;
+            findLED(led)->b = brt*b;
+        }
+    }
+    return returnValue::CONTINUE;
 }
