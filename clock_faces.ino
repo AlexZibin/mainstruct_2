@@ -1,11 +1,13 @@
 ////////////////////////////////////////////////////////////////////////////////////////////
 //   CLOCK DISPLAY MODES
-// Add any new display mode functions here.
+//   Add any new display mode functions here.
 ////////////////////////////////////////////////////////////////////////////////////////////
 
-extern DateTime now;
 returnValue (*clockFacesArray[])(long) = {minimalClock, basicClock, smoothSecond, outlineClock,   simplePendulum, breathingClock};
-ModeChanger clockFaces (clockFacesArray, sizeof(clockFacesArray)/sizeof(clockFacesArray[0]));
+const int len_clockFacesArray = sizeof(clockFacesArray)/sizeof(clockFacesArray[0]);
+//ModeChanger clockFaces (clockFacesArray, len_clockFacesArray);
+
+//extern DateTime now;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 returnValue minimalClock (long currentCallNumber) {
