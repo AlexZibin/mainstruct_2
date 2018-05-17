@@ -5,7 +5,17 @@
 
 returnValue (*clockFacesArray[])(long) = {minimalClock, basicClock, smoothSecond, outlineClock,   simplePendulum, breathingClock};
 const int len_clockFacesArray = sizeof(clockFacesArray)/sizeof(clockFacesArray[0]);
-//ModeChanger clockFaces (clockFacesArray, len_clockFacesArray);
+ControlStruct clockFacesControlStruct {clockFacesArray, len_clockFacesArray, nullptr, 
+                                       LoopMode::INFINITE, longDemoControlStruct, adjustTimeControlStruct};
+     
+/*    fPtr *funcArray;
+    int funcArrayLen;
+    fPtr endingFunction;
+    LoopMode loopMode;
+    ControlStruct *nextPress;
+    ControlStruct *nextLongPress;
+};
+
 
 //extern DateTime now;
 
