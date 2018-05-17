@@ -75,7 +75,8 @@ ControlStruct shortIntroControlStruct {len_energySaverFuncArray, len_energySaver
 
 returnValue energySaver (long currentCallNumber) {
     LEDS.clear ();
-    findLED(led)->r = findLED(led)->g = findLED(led)->b = NeoPixel_gamma8 (sine8_0 ((millis()/3)%256)/2);
+    findLED(led)->b = NeoPixel_gamma8 (sine8_0 ((millis()/3)%256)/2);
+    //findLED(led)->r = findLED(led)->g = findLED(led)->b = NeoPixel_gamma8 (sine8_0 ((millis()/3)%256)/2);
     return returnValue::CONTINUE;
 }
 
@@ -97,7 +98,7 @@ DateTime now;
 void loop () {
     now = RTC.now();
     
-    ModeChanger modeChanger (introFuncArray, introFuncArray);
+    ModeChanger modeChanger (shortIntroControlStruct);
     modeChanger.loopThruModeFunc ();
     
     /*
