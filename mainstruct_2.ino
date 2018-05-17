@@ -61,9 +61,27 @@ DualFunctionButton button(menuPin, 1000, INPUT_PULLUP);
         }
 // END CONVERSIONS
 
+/////// shortIntroControlStruct ///////
 returnValue (*introFuncArray[])(long) = {fColorDemo1, fColorDemo2};
 const int len_introFuncArray = sizeof(introFuncArray)/sizeof(introFuncArray[0]);
-//ModeChanger *intro = new ModeChanger (modeFuncArray, len_modeFuncArray);
+ControlStruct shortIntroControlStruct {introFuncArray, len_introFuncArray, nullptr, 
+                                       LoopMode::ONCE, clockFacesControlStruct, energySaverControlStruct};
+
+/////// energySaverControlStruct ///////
+returnValue (*energySaverFuncArray[])(long) = {energySaver};
+const int len_energySaverFuncArray = sizeof(energySaverFuncArray)/sizeof(energySaverFuncArray[0]);
+ControlStruct shortIntroControlStruct {len_energySaverFuncArray, len_energySaverFuncArray, nullptr, 
+                                       LoopMode::ONCE, shortIntroControlStruct, shortIntroControlStruct};
+
+returnValue energySaver (long currentCallNumber) {
+    LEDS.clear ();
+    findLED(led)->r = findLED(led)->g = findLED(led)->b = NeoPixel_gamma8 (sine8_0 ((millis()/3)%256)/2);
+    return returnValue::CONTINUE;
+}
+
+
+
+
 
 void setup () {
   initDevices ();
