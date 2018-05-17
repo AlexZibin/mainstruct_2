@@ -7,14 +7,13 @@ returnValue (*clockFacesArray[])(long) = {minimalClock, basicClock, smoothSecond
 const int len_clockFacesArray = sizeof(clockFacesArray)/sizeof(clockFacesArray[0]);
 ControlStruct clockFacesControlStruct {clockFacesArray, len_clockFacesArray, nullptr, 
                                        LoopMode::INFINITE, longDemoControlStruct, adjustTimeControlStruct};
-     
 /*    fPtr *funcArray;
     int funcArrayLen;
     fPtr endingFunction;
     LoopMode loopMode;
     ControlStruct *nextPress;
     ControlStruct *nextLongPress;
-};
+};*/
 
 
 //extern DateTime now;
@@ -222,13 +221,17 @@ returnValue breathingClock (long currentCallNumber) {
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Time adjustment routines
+returnValue (*adjustTimeArray[])(long) = {adjustTime};
+const int len_adjustTimeArray = 1;
+ControlStruct clockFacesControlStruct {adjustTimeArray, len_adjustTimeArray, nullptr, 
+                                       LoopMode::INFINITE, nullptr, clockFacesControlStruct};
 
-bool adjustTime () {
+returnValue adjustTime (long currentCallNumber) {
     static int adjustmentStep; // 60*60 for hours, 60 for minutes, 1 for seconds
     static int deltaSeconds;
     static Timer timer;
 
-    if (!timer.isOn ()) { // First-time entry
+    if (!currentCallNumber) { // First-time entry
         timer.setInterval ("ms", 10000); // Adjustment will be aborted after 10 seconds without user's activity
         timer.switchOn ();
 
@@ -248,16 +251,17 @@ bool adjustTime () {
             splitHMS (deltaSeconds, dh, dm, ds);
             RTC.adjust (DateTime (now.year (), now.month (), now.day (), dh, dm, ds));
 
-            if (adjustmentStep == 1) return true; // work done
+            if (adjustmentStep == 1) return returnValue::TERMINATE; // work done
             adjustmentStep /= 60;
         }
-        if (button.longPress() || timer.needToTrigger()) { // Adjustment will be aborted 
+        if (timer.needToTrigger()) { // Adjustment will be aborted 
+//        if (button.longPress() || timer.needToTrigger()) { // Adjustment will be aborted 
             timer.switchOff ();
             return true; // no adjustments saved
         }
         drawAdjustmentClock (deltaSeconds);
     }
-    return false; // continue next loop
+    return returnValue::CONTINUE; // continue next loop
 }
                                          
 void drawAdjustmentClock (int deltaSeconds) {
@@ -313,5 +317,3 @@ void splitHMS (int deltaSeconds, int &dh, int &dm, int &ds) {
     while (dh >= 24) dh -= 24;
     while (dh < 0) dh += 24;
 }
-
-
