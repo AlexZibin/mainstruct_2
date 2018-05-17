@@ -36,7 +36,7 @@ Encoder rotary1 (rotaryLeft, rotaryRight); // Setting up the Rotary Encoder
 
 RTC_DS1307 RTC; // Establishes the chipset of the Real Time Clock
 
-DualFunctionButton button(menuPin, 1000, INPUT_PULLUP);
+DualFunctionButton button (menuPin, 1000, INPUT_PULLUP);
 
 // CONVERSIONS
         // Which LED (in [0..59] range) corresponds to given hh:mm time 
@@ -75,8 +75,8 @@ ControlStruct shortIntroControlStruct {len_energySaverFuncArray, len_energySaver
 
 returnValue energySaver (long currentCallNumber) {
     LEDS.clear ();
-    findLED(led)->b = NeoPixel_gamma8 (sine8_0 ((millis()/3)%256)/2);
-    //findLED(led)->r = findLED(led)->g = findLED(led)->b = NeoPixel_gamma8 (sine8_0 ((millis()/3)%256)/2);
+    findLED(led)->b = NeoPixel_gamma8 (sine8_0 ((millis()/5)%256)/2);
+    //findLED(led)->r = findLED(led)->g = findLED(led)->b = NeoPixel_gamma8 (sine8_0 ((millis()/5)%256)/2);
     return returnValue::CONTINUE;
 }
 
@@ -97,6 +97,7 @@ ModeChanger modeChanger (shortIntroControlStruct);
 void loop () {
     now = RTC.now();
     modeChanger.loopThruModeFunc ();
+    backlightLEDs ();
     LEDS.show ();
 }
 
@@ -139,10 +140,22 @@ uint16_t correctMagicValue = 0xEFD3;
 struct EEPROMdata {
     uint16_t magicValue;
     int currentClockFace;
-    
+    DateTime lastClockCorrection;
+    float clockCorrectionSecPer24hours;
 };
 
-void readEEPROM (void) {}
+EEPROMdata eepromData;
+void readEEPROM (void) {
+    
+    
+    
+    if (eepromData.magicValue <> correctMagicValue) { EEPROM is blank
+        eepromData.magicValue = correctMagicValue;
+        eepromData.currentClockFace = 0;
+        //eepromData.lastClockCorrection
+        eepromData.clockCorrectionSecPer24hours = 0.0;
+    }
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -377,11 +390,11 @@ void Wheel (uint16_t WheelPos, byte &r, byte &g, byte &b) {
 }
 
 void backlightLEDs (void) {
-  for (int i = 0; i < startingLEDs; i++) {
-    _leds[i].g = 5;
-    _leds[i].r = 5;
-    _leds[i].b = 255;
-  }
+    for (int i = 0; i < startingLEDs; i++) {
+        _leds[i].g = 5;
+        _leds[i].r = 5;
+        _leds[i].b = 255;
+    }
 }
 
 bool rotaryTurnLeft (void) {
