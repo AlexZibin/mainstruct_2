@@ -77,7 +77,7 @@ ControlStruct energySaverControlStruct {energySaverFuncArray, len_energySaverFun
 
 returnValue energySaver (long currentCallNumber) {
     LEDS.clear ();
-    findLED(0)->b = NeoPixel_gamma8 (squareSine8 ((millis()/5)%256)/2);
+    findLED(0)->b = NeoPixel_gamma8 (sin_1_2 ((millis()/5)%256)/2);
     //findLED(led)->r = findLED(led)->g = findLED(led)->b = NeoPixel_gamma8 (sine8_0 ((millis()/5)%256)/2);
     return returnValue::CONTINUE;
 }
@@ -249,8 +249,7 @@ returnValue fColorDemo1 (long currentCallNumber) {
 
     static float ledBrightness;
     for (int led = 0; led < numLEDs; led++) {
-        uint8_t firstBrightness = sine8_0 (static_cast<uint8_t>(deltaT/timeStep/(1-deltaT/(playTimeMs*3.1))-direction*led*wavelen*(1+deltaT/(playTimeMs*1.3)))%256);
-        //uint8_t firstBrightnessB = sine8_0 (static_cast<uint8_t>(deltaT/timeStep/(1-deltaT/(playTimeMs*4.1))+direction*led*wavelen*(1-deltaT/76000.0))%256);
+        uint8_t firstBrightness = sin_1_2 (static_cast<uint8_t>(deltaT/timeStep/(1-deltaT/(playTimeMs*3.1))-direction*led*wavelen*(1+deltaT/(playTimeMs*1.3)))%256);
 
         // dimming at the beginning of demo and in the end:
         const float dimmingTimeMs = 3000.0;
