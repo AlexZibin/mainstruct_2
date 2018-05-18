@@ -279,8 +279,10 @@ void drawAdjustmentClock (int deltaSeconds, int adjustmentStep) {
     }
 
     unsigned long deltaT = millis () - millisAtStart;
-    const float blinkingPeriodSec = 2.0; 
-    float brt = sine8_0 (static_cast<uint8_t>((deltaT/blinkingPeriodSec))%256)/256.0; // 0..1 range
+    float blinkingPeriodSec = 2.0; 
+    if (adjustmentStep == 1) blinkingPeriodSec = 0.5;
+
+    float brt = sine8_0 ((static_cast<uint8_t>(deltaT/blinkingPeriodSec))%256)/256.0; // 0..1 range
     
     int h, m, s;
     splitHMS (deltaSeconds, h, m, s);
@@ -288,17 +290,21 @@ void drawAdjustmentClock (int deltaSeconds, int adjustmentStep) {
     // Hour (3 lines of code)
             uint8_t hourPos = _hourPos (h, m);
             uint8_t hourBrightness = 190;
-            if (adjustmentStep == 3600) hourBrightness *= (brt
+            if (adjustmentStep == 3600) hourBrightness *= brt;
     
-            findLED (hourPos)->r  = hourBrightness;
-            if (dh >= 12) 
-                findLED (hourPos-1)->r = findLED(hourPos+1)->r = hourBrightness/6;
+            findLED (hourPos)->r  = NeoPixel_gamma8(hourBrightness);
+            if (h >= 12) 
+                findLED (hourPos-1)->r = findLED(hourPos+1)->r = NeoPixel_gamma8(hourBrightness/6);
 
     // Minute  
-            findLED (m)->g = 255;
+            uint8_t minuteBrightness = 255;
+            if (adjustmentStep == 60) minuteBrightness *= brt;
+            findLED (m)->g = NeoPixel_gamma8(minuteBrightness);
 
     // Second  
-            findLED (s)->b = 255;
+            uint8_t secondsBrightness = 255;
+            if (adjustmentStep == 1) secondsBrightness *= brt;
+            findLED (s)->b = NeoPixel_gamma8(secondsBrightness);
 
     // 5-minute marks
     for (int i = 0; i < numLEDs; i += numLEDs/12) { // 60/12 = 5
