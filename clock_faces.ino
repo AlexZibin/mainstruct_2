@@ -228,7 +228,11 @@ returnValue breathingClock (long currentCallNumber) {
 returnValue (*adjustTimeArray[])(long) = {adjustTime};
 const int len_adjustTimeArray = 1;
 ControlStruct adjustTimeControlStruct {adjustTimeArray, len_adjustTimeArray, nullptr, 
-                                       LoopMode::INFINITE, nullptr, &clockFacesControlStruct};
+                                       LoopMode::INFINITE, &clockFacesControlStruct, &clockFacesControlStruct};
+//                                                         ^
+//                                                         short press is handled inside adjustTime ()
+
+//                                       LoopMode::INFINITE, nullptr, &clockFacesControlStruct};
 
 returnValue adjustTime (long currentCallNumber) {
     static int adjustmentStep; // 60*60 for hours, 60 for minutes, 1 for seconds
