@@ -263,33 +263,50 @@ returnValue adjustTime (long currentCallNumber) {
             timer.switchOff ();
             return returnValue::LONGPRESS; // no adjustments saved
         }
-        drawAdjustmentClock (deltaSeconds);
+        drawAdjustmentClock (deltaSeconds, adjustmentStep);
     }
     return returnValue::CONTINUE; // continue next loop
 }
-                                         
-void drawAdjustmentClock (int deltaSeconds) {
-    
-    for (int i = 0; i < numLEDs; i += numLEDs/12) { // 60/12 = 5
-        findLED(i)->r =  5;
-        findLED(i)->g = 70;
-        findLED(i)->b =  5;
+
+// It must blink with H, M or S depending on adjustmentStep
+void drawAdjustmentClock (int deltaSeconds, int adjustmentStep) {
+
+    static int memory = -1;
+    static unsigned long millisAtStart;
+    if (adjustmentStep != memory) {
+        millisAtStart = millis ();
+        erase60leds ();
     }
+
+    unsigned long deltaT = millis () - millisAtStart;
+    const float blinkingPeriodSec = 2.0; 
+    float brt = sine8_0 (static_cast<uint8_t>((deltaT/blinkingPeriodSec))%256)/256.0; // 0..1 range
     
-    int dh, dm, ds;
-    splitHMS (deltaSeconds, dh, dm, ds);
+    int h, m, s;
+    splitHMS (deltaSeconds, h, m, s);
 
     // Hour (3 lines of code)
-          uint8_t hourPos = _hourPos (dh, dm);
-          findLED (hourPos)->r  = 190;
-          if (dh >= 12) 
-              findLED (hourPos-1)->r = findLED(hourPos+1)->r = 30;
+            uint8_t hourPos = _hourPos (h, m);
+            uint8_t hourBrightness = 190;
+            if (adjustmentStep == 3600) hourBrightness *= (brt
+    
+            findLED (hourPos)->r  = hourBrightness;
+            if (dh >= 12) 
+                findLED (hourPos-1)->r = findLED(hourPos+1)->r = hourBrightness/6;
 
     // Minute  
-          findLED (dm)->g = 255;
+            findLED (m)->g = 255;
 
     // Second  
-          findLED (ds)->b = 255;
+            findLED (s)->b = 255;
+
+    // 5-minute marks
+    for (int i = 0; i < numLEDs; i += numLEDs/12) { // 60/12 = 5
+        findLED(i)->r =  2;
+        findLED(i)->g = 50;
+        findLED(i)->b =  2;
+    }
+    
 }
 
 void splitHMS (int deltaSeconds, int &dh, int &dm, int &ds) {
@@ -330,11 +347,7 @@ returnValue spacerShortDemo (long currentCallNumber) {
 
     if (currentCallNumber == 0) {
         millisAtStart = millis ();
-        for (int led = 0; led < numLEDs; led++) { // Don't erase starting LEDs (digits 3-6-9-12)
-            findLED(led)->r = 0;
-            findLED(led)->g = 0;
-            findLED(led)->b = 0;
-        }
+        erase60leds ();
     }
 
     unsigned long deltaT = millis () - millisAtStart;
@@ -377,3 +390,11 @@ returnValue spacerShortDemo (long currentCallNumber) {
     }
     return returnValue::CONTINUE;
 }
+
+void erase60leds (void) {
+    for (int led = 0; led < numLEDs; led++) { // Don't erase starting LEDs (digits 3-6-9-12)
+        findLED(led)->r = 0;
+        findLED(led)->g = 0;
+        findLED(led)->b = 0;
+    }
+}    
