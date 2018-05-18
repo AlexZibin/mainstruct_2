@@ -358,15 +358,17 @@ void splitHMS (int deltaSeconds, int &dh, int &dm, int &ds) {
 returnValue spacerShortDemo (long currentCallNumber) {
     static unsigned long millisAtStart;
     const long playTimeMs = 1000;
+    const float dimmingTimeMs = 500.0;
+    static int direction = -1;
 
     if (currentCallNumber == 0) {
         millisAtStart = millis ();
         erase60leds ();
+        direction = -direction;
     }
 
     unsigned long deltaT = millis () - millisAtStart;
     unsigned long timeStep = 1;
-    int direction = -1;
     float wavelen = 10.0;
 
     if (deltaT > playTimeMs) { LEDS.clear (); return returnValue::NEXT; };
@@ -379,7 +381,6 @@ returnValue spacerShortDemo (long currentCallNumber) {
                                                                 -direction*led*wavelen*(1+deltaT/(playTimeMs+4000.0)))%256);
         
         // dimming at the beginning of demo and in the end:
-        const float dimmingTimeMs = 500.0;
         if (deltaT <= dimmingTimeMs) ledBrightness = deltaT/dimmingTimeMs;
         if (deltaT >= playTimeMs-dimmingTimeMs) ledBrightness = (playTimeMs-deltaT)/dimmingTimeMs;
         
