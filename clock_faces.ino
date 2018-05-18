@@ -375,7 +375,7 @@ returnValue spacerShortDemo (long currentCallNumber) {
     byte r, g, b;
     Wheel ((deltaT/15)%384, r, g, b);
     for (int led = 0; led < numLEDs; led++) {
-        uint8_t firstBrightness = sine8_0 (static_cast<uint8_t>(deltaT/timeStep/(1-deltaT/(playTimeMs*2.1))
+        uint8_t firstBrightness = sin_1_2 (static_cast<uint8_t>(deltaT/timeStep/(1-deltaT/(playTimeMs*2.1))
                                                                 -direction*led*wavelen*(1+deltaT/(playTimeMs+4000.0)))%256);
         
         // dimming at the beginning of demo and in the end:
