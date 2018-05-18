@@ -252,6 +252,10 @@ returnValue adjustTime (long currentCallNumber) {
         }    
         if (button.shortPress()) {
             int dh, dm, ds;
+
+            Serial.print("\n shortPress() !!! \n dh, dm, ds: ");
+            Serial.print(dh); Serial.print(" "); Serial.print(dm); Serial.print(" "); Serial.println(ds);
+            
             splitHMS (deltaSeconds, dh, dm, ds);
             RTC.adjust (DateTime (now.year (), now.month (), now.day (), dh, dm, ds));
 
@@ -282,7 +286,7 @@ void drawAdjustmentClock (int deltaSeconds, int adjustmentStep) {
     float blinkingPeriodSec = 2.0; 
     if (adjustmentStep == 1) blinkingPeriodSec = 0.5;
 
-    float brt = sine8_0 ((static_cast<uint8_t>(deltaT/blinkingPeriodSec))%256)/256.0; // 0..1 range
+    float brt = squareSine8 ((static_cast<uint8_t>(deltaT/blinkingPeriodSec))%256)/256.0; // 0..1 range
     
     int h, m, s;
     splitHMS (deltaSeconds, h, m, s);
