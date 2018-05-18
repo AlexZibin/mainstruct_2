@@ -253,7 +253,7 @@ returnValue adjustTime (long currentCallNumber) {
         if (button.shortPress()) {
             int dh, dm, ds;
 
-            Serial.print("\n shortPress() !!! \n dh, dm, ds: ");
+            Serial.print("\n adjustTime () detected shortPress() !!! \n dh, dm, ds: ");
             Serial.print(dh); Serial.print(" "); Serial.print(dm); Serial.print(" "); Serial.println(ds);
             
             splitHMS (deltaSeconds, dh, dm, ds);
