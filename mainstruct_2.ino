@@ -218,6 +218,16 @@ returnValue fColorDemo2 (long currentCallNumber) {
         }
     }
 
+    byte r, g, b;
+    static float ledBrightness2;
+    if (deltaT <= 2000.0) ledBrightness2 = deltaT/2000.0;
+    Wheel ((deltaT/15)%384, r, g, b);
+    for (int i = 0; i < startingLEDs; i++) {
+          _leds[i].r = r*2*ledBrightness2;
+          _leds[i].g = g*2*ledBrightness2;
+          _leds[i].b = b*2*ledBrightness2;
+    }
+
     return returnValue::CONTINUE;
 }
 
@@ -271,7 +281,7 @@ returnValue fColorDemo1 (long currentCallNumber) {
 
     byte r, g, b;
     static float ledBrightness2;
-    if (deltaT <= 16000.0) ledBrightness2 = deltaT/16000.0;
+    if (deltaT <= 6000.0) ledBrightness2 = deltaT/6000.0;
     Wheel ((deltaT/15)%384, r, g, b);
     for (int i = 0; i < startingLEDs; i++) {
           _leds[i].r = r*2*ledBrightness2;
