@@ -107,6 +107,7 @@ void loop () {
     modeChanger->loopThruModeFunc ();
     backlightLEDs ();
     LEDS.show ();
+    adjustSeconds ();
 }
 
 void initDevices (void) {
@@ -436,3 +437,8 @@ bool rotaryTurnRight (void) {
   } 
 }
 
+// If, for example, DS1307 loses 24 seconds per day, 
+// then we manually add 1 second 24 times a day, evenly distributed
+void adjustSeconds (void) {
+    
+}
