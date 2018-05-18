@@ -77,7 +77,7 @@ ControlStruct energySaverControlStruct {energySaverFuncArray, len_energySaverFun
 
 returnValue energySaver (long currentCallNumber) {
     LEDS.clear ();
-    findLED(0)->b = NeoPixel_gamma8 (sine8_0 ((millis()/5)%256)/2);
+    findLED(0)->b = NeoPixel_gamma8 (squareSine8 ((millis()/5)%256)/2);
     //findLED(led)->r = findLED(led)->g = findLED(led)->b = NeoPixel_gamma8 (sine8_0 ((millis()/5)%256)/2);
     return returnValue::CONTINUE;
 }
@@ -229,8 +229,8 @@ returnValue fColorDemo1 (long currentCallNumber) {
     //Serial.println (currentCallNumber);
 
     if (currentCallNumber == 0) {
-      millisAtStart = millis ();
-      LEDS.clear(true);
+        millisAtStart = millis ();
+        LEDS.clear(true);
     }
 
     unsigned long deltaT = millis () - millisAtStart;
