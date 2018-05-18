@@ -67,13 +67,13 @@ extern ControlStruct energySaverControlStruct;
 returnValue (*introFuncArray[])(long) = {fColorDemo1, fColorDemo2};
 const int len_introFuncArray = sizeof(introFuncArray)/sizeof(introFuncArray[0]);
 ControlStruct shortIntroControlStruct {introFuncArray, len_introFuncArray, nullptr, 
-                                       LoopMode::ONCE, &clockFacesControlStruct, &energySaverControlStruct};
+                                       LoopMode::ONCE, &clockFacesControlStruct, &energySaverControlStruct, 0};
 
 /////// energySaverControlStruct ///////
 returnValue (*energySaverFuncArray[])(long) = {energySaver};
 const int len_energySaverFuncArray = sizeof(energySaverFuncArray)/sizeof(energySaverFuncArray[0]);
 ControlStruct energySaverControlStruct {energySaverFuncArray, len_energySaverFuncArray, nullptr, 
-                                       LoopMode::ONCE, &shortIntroControlStruct, &shortIntroControlStruct};
+                                       LoopMode::ONCE, &shortIntroControlStruct, &shortIntroControlStruct, 0};
 
 returnValue energySaver (long currentCallNumber) {
     LEDS.clear ();
@@ -163,6 +163,8 @@ void readEEPROM (void) {
         //eepromData.lastClockCorrection
         eepromData.clockCorrectionSecPer24hours = 0.0;
     }
+    
+    clockFacesControlStruct->startMode = eepromData.currentClockFace;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
