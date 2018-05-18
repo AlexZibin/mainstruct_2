@@ -10,13 +10,14 @@ returnValue (*clockFacesArray[])(long) = {minimalClock, spacerShortDemo, basicCl
 const int len_clockFacesArray = sizeof (clockFacesArray) / sizeof (clockFacesArray[0]);
 ControlStruct clockFacesControlStruct {clockFacesArray, len_clockFacesArray, nullptr, 
 //                                       LoopMode::INFINITE, &longDemoControlStruct, &adjustTimeControlStruct};
-                                       LoopMode::INFINITE, &shortIntroControlStruct, &adjustTimeControlStruct};
+                                       LoopMode::INFINITE, &shortIntroControlStruct, &adjustTimeControlStruct, 0};
 /*    fPtr *funcArray;
     int funcArrayLen;
     fPtr endingFunction;
     LoopMode loopMode;
     ControlStruct *nextPress;
     ControlStruct *nextLongPress;
+    int startMode;
 };*/
 
 
@@ -228,11 +229,11 @@ returnValue breathingClock (long currentCallNumber) {
 returnValue (*adjustTimeArray[])(long) = {adjustTime};
 const int len_adjustTimeArray = 1;
 ControlStruct adjustTimeControlStruct {adjustTimeArray, len_adjustTimeArray, nullptr, 
-                                       LoopMode::INFINITE, &clockFacesControlStruct, &clockFacesControlStruct};
+                                       LoopMode::INFINITE, &clockFacesControlStruct, &clockFacesControlStruct, 0};
 //                                                         ^
 //                                                         short press is handled inside adjustTime ()
 
-//                                       LoopMode::INFINITE, nullptr, &clockFacesControlStruct};
+//                                       LoopMode::INFINITE, nullptr, &clockFacesControlStruct, 0};
 
 returnValue adjustTime (long currentCallNumber) {
     static int adjustmentStep; // 60*60 for hours, 60 for minutes, 1 for seconds
