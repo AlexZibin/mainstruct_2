@@ -7,25 +7,36 @@
 
 // Pin definitions:
 //    #define ARDUINO_NANO
+
     #ifdef ARDUINO_NANO
+          //#define reedSwitchPin 3 // Switches off the display to reduce power consumption (before re-flashing)
           #define rotaryLeft 3
           #define rotaryRight 4
           #define LEDStripPin 9 // Data pin
           #define menuPin 7 // 
-          //#define reedSwitchPin 3 // Switches off the display to reduce power consumption (before re-flashing)
+          #define MOSFET_Pin 9 
         // Arduino Nano i2c: SDA = A4, SCL = A5.    
     #endif
     
     #ifndef ARDUINO_NANO
+          #define menuPin 2 // Arduino Pro Mini supports external interrupts only on pins 2 and 3
+//          #define reedSwitchPin 3 // Switches off the display to reduce power consumption (before re-flashing)
+          #define LEDStripPin 3 // Data pin
           #define rotaryLeft 4
           #define rotaryRight 5
-          #define LEDStripPin 3 // Data pin
-          #define menuPin 2 // Arduino Pro Mini supports external interrupts only on pins 2 and 3
-          #define reedSwitchPin 3 // Switches off the display to reduce power consumption (before re-flashing)
+          #define MOSFET_Pin 9 
         // Arduino Pro Mini i2c: SDA = A4, SCL = A5.    
     #endif
 
-#define startingLEDs 4 // Number of backlight LEDs BEFORE the strip
+// No leading 4 leds, only mosfet thru pin9
+#define MOSFET_LED 
+#ifdef MOSFET_LED 
+  #define startingLEDs 0 // Number of backlight LEDs BEFORE the strip
+#endif
+#ifndef MOSFET_LED 
+  #define startingLEDs 4 // Number of backlight LEDs BEFORE the strip
+#endif
+
 #define numLEDs 60 // Number of LEDs in strip
 #define LEDOffset  30 // First LED in strip corresponds to 30-th second
 
@@ -77,8 +88,13 @@ ControlStruct energySaverControlStruct {energySaverFuncArray, len_energySaverFun
 
 returnValue energySaver (long currentCallNumber) {
     LEDS.clear ();
-    findLED(0)->b = NeoPixel_gamma8 (sin_1_2 ((millis()/5)%256)/2);
+    findLED(0)->b = NeoPixel_gamma8 (sin_1_2 ((millis()/10)%256)/3);
     //findLED(led)->r = findLED(led)->g = findLED(led)->b = NeoPixel_gamma8 (sine8_0 ((millis()/5)%256)/2);
+    
+    #ifdef MOSFET_LED 
+      analogWrite(MOSFET_Pin, 0);
+    #endif
+
     return returnValue::CONTINUE;
 }
 
@@ -98,14 +114,10 @@ int num = 0;
 DateTime now;
 
 void loop () {
-    /*Serial.print ("\n\nLoop ");
-    Serial.println (++num);
-    delay (1000);*/
-    
     now = RTC.now();
     LEDS.clear ();
     modeChanger->loopThruModeFunc ();
-    backlightLEDs ();
+    //backlightLEDs ();
     LEDS.show ();
     adjustSeconds ();
 }
@@ -165,7 +177,7 @@ void readEEPROM (void) {
         eepromData.clockCorrectionSecPer24hours = 0.0;
     }
     
-    clockFacesControlStruct->startMode = eepromData.currentClockFace;
+    clockFacesControlStruct.startMode = eepromData.currentClockFace;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -187,6 +199,11 @@ returnValue fColorDemo2 (long currentCallNumber) {
     unsigned long timeStep = 5;
     int direction = -1;
     float wavelen = 10.0;
+
+    #ifdef MOSFET_LED 
+      uint8_t mosBrt = sine8_0 (static_cast<uint8_t>(deltaT/timeStep/(1-deltaT/(playTimeMs*1.9))%256);
+      analogWrite(MOSFET_Pin, mosBrt);
+    #endif
 
     if (deltaT > playTimeMs) { LEDS.clear (); return returnValue::NEXT; };
 
@@ -221,10 +238,10 @@ returnValue fColorDemo2 (long currentCallNumber) {
         }
     }
 
-    byte r, g, b;
+    //byte r, g, b;
     static float ledBrightness2;
     if (deltaT <= 2000.0) ledBrightness2 = deltaT/2000.0;
-    Wheel ((deltaT/15)%384, r, g, b);
+    Wheel ((deltaT/25)%384, r, g, b);
     for (int i = 0; i < startingLEDs; i++) {
           _leds[i].r = r*2*ledBrightness2;
           _leds[i].g = g*2*ledBrightness2;
@@ -409,32 +426,39 @@ void Wheel (uint16_t WheelPos, byte &r, byte &g, byte &b) {
   }
 }
 
-void backlightLEDs (void) {
+void backlightLEDs (long dummy) {
     for (int i = 0; i < startingLEDs; i++) {
         _leds[i].g = 5;
         _leds[i].r = 5;
         _leds[i].b = 255;
     }
+    #ifdef MOSFET_LED 
+      analogWrite(MOSFET_Pin, 255);
+    #endif
 }
 
 bool rotaryTurnLeft (void) {
   static long lastRotary = 0;
   int rotary1Pos = rotary1.read(); // Checks the rotary position
 
-  if (rotary1Pos <= -ROTARY_TICKS && (millis() - lastRotary) >= 1000) {
+  if (rotary1Pos <= -ROTARY_TICKS && (millis() - lastRotary) >= 200) {
       rotary1.write(0);
       lastRotary = millis();
+      return true;
   } 
+  return false;
 }
 
 bool rotaryTurnRight (void) {
   static long lastRotary = 0;
   int rotary1Pos = rotary1.read(); // Checks the rotary position
 
-  if (rotary1Pos >= ROTARY_TICKS && (millis() - lastRotary) >= 1000) {
+  if (rotary1Pos >= ROTARY_TICKS && (millis() - lastRotary) >= 200) {
       rotary1.write(0);
       lastRotary = millis();
+      return true;
   } 
+  return false;
 }
 
 // If, for example, DS1307 loses 24 seconds per day, 

@@ -8,7 +8,7 @@ extern ControlStruct adjustTimeControlStruct;
 returnValue (*clockFacesArray[])(long) = {minimalClock, spacerShortDemo, basicClock, spacerShortDemo, 
                                           smoothSecond, spacerShortDemo, outlineClock,   simplePendulum, breathingClock};
 const int len_clockFacesArray = sizeof (clockFacesArray) / sizeof (clockFacesArray[0]);
-ControlStruct clockFacesControlStruct {clockFacesArray, len_clockFacesArray, nullptr, 
+ControlStruct clockFacesControlStruct {clockFacesArray, len_clockFacesArray, backlightLEDs, 
 //                                       LoopMode::INFINITE, &longDemoControlStruct, &adjustTimeControlStruct};
                                        LoopMode::INFINITE, &shortIntroControlStruct, &adjustTimeControlStruct, 0};
 /*    fPtr *funcArray;
@@ -28,8 +28,8 @@ returnValue minimalClock (long currentCallNumber) {
     if (currentCallNumber > 10) { // a dark screen at first few calls
         uint8_t hourPos = _hourPos (now.hour(), now.minute());
         findLED(hourPos)->r = 255;
-        findLED(now.minute())->g = 255;
-        findLED(now.second())->b = 255;
+        findLED(now.minute())->g = 160;
+        findLED(now.second())->b = 160;
     }
     return returnValue::CONTINUE;
 }
@@ -81,16 +81,18 @@ returnValue smoothSecond (long currentCallNumber) {
                 millisAtStart = millis ();
             }
 
-            // Hour (3 lines of code)
+            // Hour
                   uint8_t hourPos = _hourPos (now.hour(), now.minute());
                   findLED(hourPos-1)->r = findLED(hourPos+1)->r = 30;
                   findLED(hourPos)->r = 170;
+                  findLED(hourPos-1)->g = findLED(hourPos+1)->g = findLED(hourPos)->g = 0;
+                  findLED(hourPos-1)->b = findLED(hourPos+1)->b = findLED(hourPos)->b = 0;
 
             // Minute  
                   findLED(now.minute())->g = 255;
 
             // Second (5 lines of code)
-                  uint8_t delta = static_cast <uint8_t> (128.0*(millis () - millisAtStart)/1000.0);
+                  uint8_t delta = static_cast <uint8_t> (128.0*(millis () - millisAtStart)/1000.0); // 0..128
                   uint8_t secondBrightness1 = NeoPixel_gamma8 (NeoPixel_sine8( 64+delta)); // 64 means from Max to Min
                   uint8_t secondBrightness2 = NeoPixel_gamma8 (NeoPixel_sine8(192+delta)); // 192 means from Min to Max (same as sine8_0 ())
 
@@ -103,24 +105,26 @@ returnValue smoothSecond (long currentCallNumber) {
 
 //////////////////////////////////////////////////////////////////////////////////////////
 returnValue outlineClock (long currentCallNumber) {
-  for (int i = 0; i < numLEDs; i += numLEDs/12) { // 60/12 = 5
-      findLED(i)->r = 100;
-      findLED(i)->g = 100;
-      findLED(i)->b = 100;
-  }
-
-  // Hour (3 lines of code)
-          uint8_t hourPos = _hourPos (now.hour(), now.minute());
-          findLED(hourPos-1)->r = findLED(hourPos+1)->r = 30;
-          findLED(hourPos)->r  = 190;
+    for (int i = 0; i < numLEDs; i += numLEDs/12) { // 60/12 = 5
+        findLED(i)->r = 35;
+        findLED(i)->g = 30;
+        findLED(i)->b = 30;
+    }
   
-  // Minute  
-          findLED(now.minute())->g = 255;
+    // Hour (3 lines of code)
+            uint8_t hourPos = _hourPos (now.hour(), now.minute());
+            findLED(hourPos-1)->r = findLED(hourPos+1)->r = 30;
+            findLED(hourPos)->r  = 190;
     
-  // Second  
-          findLED(now.second())->b = 255;
-
-    return returnValue::CONTINUE;
+    // Minute  
+            findLED(now.minute())->r =   0;
+            findLED(now.minute())->g = 255;
+            findLED(now.minute())->b =   0;
+      
+    // Second  
+            findLED(now.second())->b = 255;
+  
+      return returnValue::CONTINUE;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -158,13 +162,13 @@ returnValue outlineClock (long currentCallNumber) {
 //////////////////////////////////////////////////////////////////////////////////////////
 returnValue simplePendulum (long currentCallNumber) {
     const int halfAmplitude = 8;
-    const uint8_t pendulumSpeed = 1;
+    const int pendulumPeriod = 2;
     static unsigned long millisAtStart;
   
     for (int i = 0; i < numLEDs; i += numLEDs/12) { // 60/12 = 5
-        findLED(i)->r = 10;
-        findLED(i)->g = 10;
-        findLED(i)->b = 100;
+        findLED(i)->r = 35;
+        findLED(i)->g = 30;
+        findLED(i)->b = 30;
     }
 
     if (currentCallNumber == 0) {
@@ -173,21 +177,24 @@ returnValue simplePendulum (long currentCallNumber) {
 
         // Pendulum lights are set first, so hour/min/sec lights override and don't flicker as millisec passes
 
-                uint8_t deltaS = (((millis () - millisAtStart)*pendulumSpeed)%1000)/4;  // = 0..255
+                uint8_t deltaS = (((millis () - millisAtStart)/pendulumPeriod)%1000)/4;  // = 0..255
                 uint8_t pendulumPos = 30 + halfAmplitude - (2*halfAmplitude * static_cast <int> (sine8_0 (deltaS)))/256.0; // = 38..22
 
-                findLED(pendulumPos)->r = 100;
+                findLED(pendulumPos)->r = 0;
                 findLED(pendulumPos)->g = 100;
                 findLED(pendulumPos)->b = 100;
 
         // The colours are set last, so if on same LED mixed colours are created
-        // Hour (3 lines of code)
+        // Hour 
                 uint8_t hourPos = _hourPos (now.hour(), now.minute());
                 findLED(hourPos-1)->r = findLED(hourPos+1)->r = 30;
                 findLED(hourPos)->r  = 190;
+                findLED(hourPos-1)->g = findLED(hourPos+1)->g = findLED(hourPos)->g = 0;
+                findLED(hourPos-1)->b = findLED(hourPos+1)->b = findLED(hourPos)->b = 0;
 
         // Minute  
                 findLED(now.minute())->g = 255;
+                findLED(now.minute())->r = findLED(now.minute())->b = 0;
 
         // Second  
                 findLED(now.second())->b = 255;
@@ -203,7 +210,7 @@ returnValue breathingClock (long currentCallNumber) {
         millisAtStart = millis ();
     } 
     
-    uint8_t breathBrightness = sine8_0 (millisAtStart%256) >> 2; // 0..64
+    uint8_t breathBrightness = (sine8_0 (((millis()-millisAtStart)/20)%256) / 4 + 1); // (0..64) + 1
     for (int i = 0; i < numLEDs; i += numLEDs/12) { // 60/12 = 5
         findLED(i)->r = breathBrightness;
         findLED(i)->g = breathBrightness;
@@ -214,9 +221,12 @@ returnValue breathingClock (long currentCallNumber) {
           uint8_t hourPos = _hourPos (now.hour(), now.minute());
           findLED(hourPos-1)->r = findLED(hourPos+1)->r = 30;
           findLED(hourPos)->r  = 190;
+          findLED(hourPos-1)->g = findLED(hourPos+1)->g = findLED(hourPos)->g = 0;
+          findLED(hourPos-1)->b = findLED(hourPos+1)->b = findLED(hourPos)->b = 0;
   
   // Minute  
           findLED(now.minute())->g = 255;
+          findLED(now.minute())->r = findLED(now.minute())->b = 0;
     
   // Second  
           findLED(now.second())->b = 255;
@@ -237,7 +247,7 @@ ControlStruct adjustTimeControlStruct {adjustTimeArray, len_adjustTimeArray, nul
 
 returnValue adjustTime (long currentCallNumber) {
     static int adjustmentStep; // 60*60 for hours, 60 for minutes, 1 for seconds
-    static int deltaSeconds;
+    static long deltaSeconds;
     static Timer timer;
 
     if (!currentCallNumber) { // First-time entry
@@ -246,6 +256,7 @@ returnValue adjustTime (long currentCallNumber) {
 
         deltaSeconds = 0;
         adjustmentStep = 3600; // HOURS = 60*60
+        Serial.println("\n adjustmentStep = 3600; // HOURS = 60*60");
     } else {
         if (rotaryTurnLeft ()) {
             deltaSeconds -= adjustmentStep;
@@ -255,20 +266,21 @@ returnValue adjustTime (long currentCallNumber) {
             deltaSeconds += adjustmentStep; // HOURS -> MINUTES -> SECONDS
             timer.switchOn ();
         }    
+        int dh, dm, ds;
         if (button.shortPress()) {
-            int dh, dm, ds;
-
-            Serial.print("\n adjustTime () detected shortPress() !!! \n dh, dm, ds: ");
-            Serial.print(dh); Serial.print(" "); Serial.print(dm); Serial.print(" "); Serial.println(ds);
-            
-            splitHMS (deltaSeconds, dh, dm, ds);
-            RTC.adjust (DateTime (now.year (), now.month (), now.day (), dh, dm, ds));
-
-            if (adjustmentStep == 1) return returnValue::SHORTPRESS; // work done
+            timer.switchOn ();
+            if (adjustmentStep == 1) {  // work done
+                splitHMS (deltaSeconds, dh, dm, ds);
+                Serial.print("\n adjustTime () detected shortPress() !!! \n dh, dm, ds: ");
+                Serial.print(dh); Serial.print(" "); Serial.print(dm); Serial.print(" "); Serial.println(ds);
+                
+                RTC.adjust (DateTime (now.year (), now.month (), now.day (), dh, dm, ds));
+                return returnValue::SHORTPRESS; 
+            }
             adjustmentStep /= 60;
         }
         if (timer.needToTrigger()) { // Adjustment will be aborted 
-//        if (button.longPress() || timer.needToTrigger()) { // Adjustment will be aborted 
+            Serial.print("\n adjustTime () detected needToTrigger() !!! \n dh, dm, ds: ");
             timer.switchOff ();
             return returnValue::LONGPRESS; // no adjustments saved
         }
@@ -278,13 +290,21 @@ returnValue adjustTime (long currentCallNumber) {
 }
 
 // It must blink with H, M or S depending on adjustmentStep
-void drawAdjustmentClock (int deltaSeconds, int adjustmentStep) {
+void drawAdjustmentClock (long deltaSeconds, int adjustmentStep) {
 
     static int memory = -1;
     static unsigned long millisAtStart;
     if (adjustmentStep != memory) {
         millisAtStart = millis ();
-        erase60leds ();
+        memory = adjustmentStep;
+        //erase60leds ();
+    }
+
+    // 5-minute marks
+    for (int i = 0; i < numLEDs; i += numLEDs/12) { // 60/12 = 5
+        findLED(i)->r =  9;
+        findLED(i)->g =  9;
+        findLED(i)->b =  15;
     }
 
     unsigned long deltaT = millis () - millisAtStart;
@@ -314,14 +334,6 @@ void drawAdjustmentClock (int deltaSeconds, int adjustmentStep) {
             uint8_t secondsBrightness = 255;
             if (adjustmentStep == 1) secondsBrightness *= brt;
             findLED (s)->b = NeoPixel_gamma8(secondsBrightness);
-
-    // 5-minute marks
-    for (int i = 0; i < numLEDs; i += numLEDs/12) { // 60/12 = 5
-        findLED(i)->r =  2;
-        findLED(i)->g = 50;
-        findLED(i)->b =  2;
-    }
-    
 }
 
 void splitHMS (int deltaSeconds, int &dh, int &dm, int &ds) {
@@ -376,7 +388,7 @@ returnValue spacerShortDemo (long currentCallNumber) {
 
     static float ledBrightness;
     byte r, g, b;
-    Wheel ((deltaT/15)%384, r, g, b);
+    Wheel ((millis()/15)%384, r, g, b);
     for (int led = 0; led < numLEDs; led++) {
         uint8_t firstBrightness = sin_1_2 (static_cast<uint8_t>(deltaT/timeStep/(1-deltaT/(playTimeMs*2.1))
                                                                 -direction*led*wavelen*(1+deltaT/(playTimeMs+4000.0)))%256);
