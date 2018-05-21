@@ -6,9 +6,10 @@
 extern ControlStruct adjustTimeControlStruct;
 
 returnValue (*clockFacesArray[])(long) = {minimalClock, spacerShortDemo, basicClock, spacerShortDemo, 
-                                          smoothSecond, spacerShortDemo, outlineClock,   simplePendulum, breathingClock};
+                                          smoothSecond, spacerShortDemo, outlineClock, spacerShortDemo,   
+                                          simplePendulum, spacerShortDemo, breathingClock, spacerShortDemo};
 const int len_clockFacesArray = sizeof (clockFacesArray) / sizeof (clockFacesArray[0]);
-ControlStruct clockFacesControlStruct {clockFacesArray, len_clockFacesArray, backlightLEDs, 
+ControlStruct clockFacesControlStruct {clockFacesArray, len_clockFacesArray, backlightLEDsEndingFunc, 
 //                                       LoopMode::INFINITE, &longDemoControlStruct, &adjustTimeControlStruct};
                                        LoopMode::INFINITE, &shortIntroControlStruct, &adjustTimeControlStruct, 0};
 /*    fPtr *funcArray;
