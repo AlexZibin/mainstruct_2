@@ -116,8 +116,8 @@ DateTime now;
 void loop () {
     now = RTC.now();
     LEDS.clear ();
+    handleUnlockCode ();
     modeChanger->loopThruModeFunc ();
-    //backlightLEDs ();
     LEDS.show ();
     adjustSeconds ();
 }
@@ -167,6 +167,7 @@ struct EEPROMdata {
     
     int dayBrightness;
     int nightBrightness;
+    int[5] unlockCode;
 };
 
 EEPROMdata eepromData;
@@ -461,4 +462,7 @@ bool rotaryTurnRight (void) {
 // then we manually add 1 second 24 times a day, evenly distributed
 void adjustSeconds (void) {
     
+}
+
+void handleUnlockCode (void) {
 }
