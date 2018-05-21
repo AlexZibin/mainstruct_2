@@ -173,6 +173,7 @@ struct EEPROMdata {
     int nightBrightness;
     int unlockCode[unlockCodeLen];
     int totalUnlockCode[unlockCodeLen];
+    int remainingUnlockEfforts;
 };
 
 EEPROMdata eepromData;
@@ -190,6 +191,7 @@ void readEEPROM (void) {
             eepromData.unlockCode[i] = correctUnlockCode[i];
             eepromData.totalUnlockCode[i] = correctTotallUnlockCode[i];
         }
+        remainingUnlockEfforts = 5;
     }
     
     clockFacesControlStruct.startMode = eepromData.currentClockFace;
