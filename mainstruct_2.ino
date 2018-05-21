@@ -29,7 +29,7 @@
     #endif
 
 // No leading 4 leds, only mosfet thru pin9
-#define MOSFET_LED 
+//#define MOSFET_LED 
 #ifdef MOSFET_LED 
   #define startingLEDs 0 // Number of backlight LEDs BEFORE the strip
 #endif
@@ -161,8 +161,12 @@ uint16_t correctMagicValue = 0xEFD3;
 struct EEPROMdata {
     uint16_t magicValue;
     int currentClockFace;
-    DateTime lastClockCorrection;
+    
+    DateTime lastClockCorrectionTime;
     float clockCorrectionSecPer24hours;
+    
+    int dayBrightness;
+    int nightBrightness;
 };
 
 EEPROMdata eepromData;
@@ -173,7 +177,8 @@ void readEEPROM (void) {
     if (eepromData.magicValue != correctMagicValue) { // EEPROM is blank
         eepromData.magicValue = correctMagicValue;
         eepromData.currentClockFace = 0;
-        //eepromData.lastClockCorrection
+        
+        //eepromData.lastClockCorrectionTime = now ();
         eepromData.clockCorrectionSecPer24hours = 0.0;
     }
     
@@ -200,8 +205,9 @@ returnValue fColorDemo2 (long currentCallNumber) {
     int direction = -1;
     float wavelen = 10.0;
 
-    #ifdef MOSFET_LED 
       uint8_t mosBrt = sine8_0 (static_cast<uint8_t>(deltaT/timeStep/(1-deltaT/(playTimeMs*1.9))%256);
+      Serial.print ("mosBrt = "); Serial.println (mosBrt); // Bug catch for MOSFET_LED
+    #ifdef MOSFET_LED 
       analogWrite(MOSFET_Pin, mosBrt);
     #endif
 
@@ -211,7 +217,8 @@ returnValue fColorDemo2 (long currentCallNumber) {
     byte r, g, b;
     Wheel ((deltaT/15)%384, r, g, b);
     for (int led = 0; led < numLEDs; led++) {
-        uint8_t firstBrightness = sine8_0 (static_cast<uint8_t>(deltaT/timeStep/(1-deltaT/(playTimeMs*2.1))-direction*led*wavelen*(1+deltaT/(playTimeMs+4000.0)))%256);
+        uint8_t firstBrightness = sine8_0 (static_cast<uint8_t>(deltaT/timeStep/(1-deltaT/(playTimeMs*2.1))
+                                                                -direction*led*wavelen*(1+deltaT/(playTimeMs+4000.0)))%256);
         
         // dimming at the beginning of demo and in the end:
         const float dimmingTimeMs = 3000.0;
