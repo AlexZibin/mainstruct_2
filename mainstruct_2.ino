@@ -433,17 +433,6 @@ void Wheel (uint16_t WheelPos, byte &r, byte &g, byte &b) {
   }
 }
 
-void backlightLEDs (long dummy) {
-    for (int i = 0; i < startingLEDs; i++) {
-        _leds[i].g = 5;
-        _leds[i].r = 5;
-        _leds[i].b = 255;
-    }
-    #ifdef MOSFET_LED 
-      analogWrite(MOSFET_Pin, 255);
-    #endif
-}
-
 bool rotaryTurnLeft (void) {
   static long lastRotary = 0;
   int rotary1Pos = rotary1.read(); // Checks the rotary position
