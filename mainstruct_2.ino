@@ -167,7 +167,7 @@ struct EEPROMdata {
     
     int dayBrightness;
     int nightBrightness;
-    int[5] unlockCode;
+    int unlockCode[5];
 };
 
 EEPROMdata eepromData;
