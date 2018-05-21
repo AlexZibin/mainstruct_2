@@ -157,7 +157,11 @@ void initDevices (void) {
 
 
 /////////////////////////////////////// EEPROM
-uint16_t correctMagicValue = 0xEFD3;
+const uint16_t correctMagicValue = 0xEFD3;
+const int correctUnlockCode[] = {2, 2}; 
+const int unlockCodeLen = sizeof(correctUnlockCode)/sizeof(correctUnlockCode[0]);
+const int correctTotallUnlockCode[unlockCodeLen] = {0, 3}; // First "0" stands for totally unlocked clock
+
 struct EEPROMdata {
     uint16_t magicValue;
     int currentClockFace;
@@ -167,7 +171,8 @@ struct EEPROMdata {
     
     int dayBrightness;
     int nightBrightness;
-    int unlockCode[5];
+    int unlockCode[unlockCodeLen];
+    int totalUnlockCode[unlockCodeLen];
 };
 
 EEPROMdata eepromData;
@@ -181,6 +186,10 @@ void readEEPROM (void) {
         
         //eepromData.lastClockCorrectionTime = now ();
         eepromData.clockCorrectionSecPer24hours = 0.0;
+        for int i=0; i < unlockCodeLen; i++) {
+            eepromData.unlockCode[i] = correctUnlockCode[i];
+            eepromData.totalUnlockCode[i] = correctTotallUnlockCode[i];
+        }
     }
     
     clockFacesControlStruct.startMode = eepromData.currentClockFace;
@@ -465,4 +474,5 @@ void adjustSeconds (void) {
 }
 
 void handleUnlockCode (void) {
+    if (correctTotallUnlockCode[0] == 0) return; // First "0" stands for totally unlocked clock
 }
