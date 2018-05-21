@@ -427,3 +427,14 @@ void erase60leds (void) {
         findLED(led)->b = 0;
     }
 }    
+
+void backlightLEDsEndingFunc (long dummy) {
+    for (int i = 0; i < startingLEDs; i++) {
+        _leds[i].g = 5;
+        _leds[i].r = 5;
+        _leds[i].b = 255;
+    }
+    #ifdef MOSFET_LED 
+      analogWrite(MOSFET_Pin, 255);
+    #endif
+}
