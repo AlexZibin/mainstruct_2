@@ -478,9 +478,15 @@ void adjustSeconds (void) {
             long secondsNowFromMidnight = __secondsNowFromMidnight ();
             while (adjustAtThisSecond < secondsNowFromMidnight)
                 adjustAtThisSecond += eepromData.clockCorrectionSecInterval;
+            Serial.print("adjustAtThisSecond: "); Serial.println(adjustAtThisSecond); 
         }
-        if (adjustAtThisSecond <= __secondsNowFromMidnight ()) {
+        int s = now.second ();
+        if ((adjustAtThisSecond <= __secondsNowFromMidnight ()) && (s > 0) && (s < 59)) {
+            adjustAtThisSecond += eepromData.clockCorrectionSecInterval;
+            //if (adjustAtThisSecond >= 86400L) adjustAtThisSecond -= 86400L;
             
+            RTC.adjust (DateTime (now.year (), now.month (), now.day (), 
+                                  now.hour (), now.minute (), eepromData.clockCorrectionDirection + s));
         }
     }
 }
