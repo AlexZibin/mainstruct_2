@@ -107,9 +107,9 @@ returnValue smoothSecond (long currentCallNumber) {
 //////////////////////////////////////////////////////////////////////////////////////////
 returnValue outlineClock (long currentCallNumber) {
     for (int i = 0; i < numLEDs; i += numLEDs/12) { // 60/12 = 5
-        findLED(i)->r = 35;
-        findLED(i)->g = 30;
-        findLED(i)->b = 30;
+        findLED(i)->r = 20;
+        findLED(i)->g = 25;
+        findLED(i)->b = 20;
     }
   
     // Hour (3 lines of code)
@@ -167,9 +167,9 @@ returnValue simplePendulum (long currentCallNumber) {
     static unsigned long millisAtStart;
   
     for (int i = 0; i < numLEDs; i += numLEDs/12) { // 60/12 = 5
-        findLED(i)->r = 35;
-        findLED(i)->g = 30;
-        findLED(i)->b = 30;
+        findLED(i)->r = 20;
+        findLED(i)->g = 20;
+        findLED(i)->b = 25;
     }
 
     if (currentCallNumber == 0) {
@@ -179,12 +179,20 @@ returnValue simplePendulum (long currentCallNumber) {
         // Pendulum lights are set first, so hour/min/sec lights override and don't flicker as millisec passes
 
                 uint8_t deltaS = (((millis () - millisAtStart)/pendulumPeriod)%1000)/4;  // = 0..255
-                uint8_t pendulumPos = 30 + halfAmplitude - (2*halfAmplitude * static_cast <int> (sine8_0 (deltaS)))/256.0; // = 38..22
+                float pendulumPos = 30.0 - halfAmplitude + (2*halfAmplitude * sine8_0 (deltaS))/256.0; // = 22..38
+                int basePendulumPos = static_cast<int>(pendulumPos);
+                float deltaPendulumPos = pendulumPos - basePendulumPos; // = 0..1
+                uint8_8 brt1 = NeoPixel_gamma8 (NeoPixel_sine8( 64 + deltaPendulumPos*256)); // = 255..0
+                uint8_8 brt2 = NeoPixel_gamma8 (NeoPixel_sine8(192 + deltaPendulumPos*256)); // = 0..255
 
-                findLED(pendulumPos)->r = 0;
-                findLED(pendulumPos)->g = 100;
-                findLED(pendulumPos)->b = 100;
+                findLED(basePendulumPos)->r = 0;
+                findLED(basePendulumPos)->g = brt1;
+                findLED(basePendulumPos)->b = brt1;
 
+                findLED(basePendulumPos+1)->r = 0;
+                findLED(basePendulumPos+1)->g = brt2;
+                findLED(basePendulumPos+1)->b = brt2;
+        
         // The colours are set last, so if on same LED mixed colours are created
         // Hour 
                 uint8_t hourPos = _hourPos (now.hour(), now.minute());
