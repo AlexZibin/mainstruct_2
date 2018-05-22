@@ -252,7 +252,7 @@ returnValue adjustTime (long currentCallNumber) {
     static Timer timer;
 
     if (!currentCallNumber) { // First-time entry
-        timer.setInterval ("ms", 10000); // Adjustment will be aborted after 10 seconds without user's activity
+        timer.setInterval ("adjustTime", 10000); // Adjustment will be aborted after 10 seconds without user's activity
         timer.switchOn ();
 
         deltaSeconds = 0;
