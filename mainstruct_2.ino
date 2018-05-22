@@ -165,8 +165,9 @@ struct EEPROMdata {
     uint16_t magicValue;
     int currentClockFace;
     
-    DateTime lastClockCorrectionTime;
+    DateTime lastClockManualCorrectionTime;
     long clockCorrectionSecInterval;
+    int clockCorrectionDirection;
     
     int dayBrightness;
     int nightBrightness;
@@ -185,7 +186,7 @@ void readEEPROM (void) {
         eepromData.currentClockFace = 0;
         
         //eepromData.lastClockCorrectionTime = now ();
-        eepromData.clockCorrectionSecInterval = 0L; // 0 stands for "no correction"
+        eepromData.clockCorrectionSecInterval = 0L; // 0 stands for "no correction ever made"
         for int i=0; i < unlockCodeLen; i++) {
             eepromData.unlockCode[i] = correctUnlockCode[i];
             eepromData.totalUnlockCode[i] = correctTotalUnlockCode[i];
@@ -472,18 +473,17 @@ bool rotaryTurnRight (void) {
 // then we manually add 1 second 24 times a day, evenly distributed
 void adjustSeconds (void) {
     if (eepromData.clockCorrectionSecInterval != 0) {
-        static long adjustAtThisSecond = -1;
+        static DateTime adjustAtThisSecond = -1;
 
         if (adjustAtThisSecond == -1) { 
-            long secondsNowFromMidnight = __secondsNowFromMidnight ();
-            while (adjustAtThisSecond < secondsNowFromMidnight)
-                adjustAtThisSecond += eepromData.clockCorrectionSecInterval;
-            Serial.print("adjustAtThisSecond: "); Serial.println(adjustAtThisSecond); 
+            adjustAtThisSecond = DateTime (now.year (), now.month (), now.day (), 0, 0, 0);
+            while (adjustAtThisSecond < now ())
+                adjustAtThisSecond += TimeSpan (eepromData.clockCorrectionSecInterval);
+            Serial.print("adjustAtThisSecond: "); Serial.println(adjustAtThisSecond); //take code from DateTime timespan example
         }
         int s = now.second ();
-        if ((adjustAtThisSecond <= __secondsNowFromMidnight ()) && (s > 0) && (s < 59)) {
-            adjustAtThisSecond += eepromData.clockCorrectionSecInterval;
-            //if (adjustAtThisSecond >= 86400L) adjustAtThisSecond -= 86400L;
+        if ((adjustAtThisSecond <= now ()) && (s > 0) && (s < 59)) {
+            adjustAtThisSecond += TimeSpan (eepromData.clockCorrectionSecInterval);
             
             RTC.adjust (DateTime (now.year (), now.month (), now.day (), 
                                   now.hour (), now.minute (), eepromData.clockCorrectionDirection + s));
@@ -492,5 +492,6 @@ void adjustSeconds (void) {
 }
 
 void handleUnlockCode (void) {
-    if (correctTotallUnlockCode[0] == 0) return; // First "0" stands for totally unlocked clock
+    if (correctTotallUnlockCode[0] != 0) { // First "0" stands for totally unlocked clock
+    }
 }
