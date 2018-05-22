@@ -98,7 +98,6 @@ returnValue energySaver (long currentCallNumber) {
     return returnValue::CONTINUE;
 }
 
-
 ModeChanger *modeChanger;
 
 void setup () {
@@ -167,7 +166,7 @@ struct EEPROMdata {
     int currentClockFace;
     
     DateTime lastClockCorrectionTime;
-    float clockCorrectionSecPer24hours;
+    long clockCorrectionSecInterval;
     
     int dayBrightness;
     int nightBrightness;
@@ -186,12 +185,12 @@ void readEEPROM (void) {
         eepromData.currentClockFace = 0;
         
         //eepromData.lastClockCorrectionTime = now ();
-        eepromData.clockCorrectionSecPer24hours = 0.0;
+        eepromData.clockCorrectionSecInterval = 0L; // 0 stands for "no correction"
         for int i=0; i < unlockCodeLen; i++) {
             eepromData.unlockCode[i] = correctUnlockCode[i];
-            eepromData.totalUnlockCode[i] = correctTotallUnlockCode[i];
+            eepromData.totalUnlockCode[i] = correctTotalUnlockCode[i];
         }
-        remainingUnlockEfforts = 5;
+        eepromData.remainingUnlockEfforts = 5;
     }
     
     clockFacesControlStruct.startMode = eepromData.currentClockFace;
@@ -472,7 +471,18 @@ bool rotaryTurnRight (void) {
 // If, for example, DS1307 loses 24 seconds per day, 
 // then we manually add 1 second 24 times a day, evenly distributed
 void adjustSeconds (void) {
-    
+    if (eepromData.clockCorrectionSecInterval != 0) {
+        static long adjustAtThisSecond = -1;
+
+        if (adjustAtThisSecond == -1) { 
+            long secondsNowFromMidnight = __secondsNowFromMidnight ();
+            while (adjustAtThisSecond < secondsNowFromMidnight)
+                adjustAtThisSecond += eepromData.clockCorrectionSecInterval;
+        }
+        if (adjustAtThisSecond <= __secondsNowFromMidnight ()) {
+            
+        }
+    }
 }
 
 void handleUnlockCode (void) {
