@@ -429,10 +429,23 @@ void erase60leds (void) {
 }    
 
 void backlightLEDsEndingFunc (long dummy) {
+    static Timer timer;
     for (int i = 0; i < startingLEDs; i++) {
         _leds[i].g = 5;
         _leds[i].r = 5;
         _leds[i].b = 255;
+    }
+    
+    if (eeprominfo.modeNumber <> modeChanger->getCurrModeNumber ()) {
+        eeprominfo.modeNumber = modeChanger->getCurrModeNumber ();
+        timer.setInterval ("backlightLEDsEndingFunc, Timer for save mode in EEPROM", 5000);
+        timer.switchOn ();
+    }
+
+    if (timer.needToTrigger ())
+        timer.switchOff ();
+        Serial.println ("Saving mode in EEPROM!");
+        writeEeprom ();
     }
     #ifdef MOSFET_LED 
       analogWrite(MOSFET_Pin, 255);
