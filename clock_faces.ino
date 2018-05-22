@@ -6,8 +6,10 @@
 extern ControlStruct adjustTimeControlStruct;
 
 returnValue (*clockFacesArray[])(long) = {minimalClock, spacerShortDemo, basicClock, spacerShortDemo, 
-                                          smoothSecond, spacerShortDemo, outlineClock, spacerShortDemo,   
-                                          simplePendulum, spacerShortDemo, breathingClock, spacerShortDemo};
+                                          smoothSecond, spacerShortDemo, outlineClock, spacerShortDemo,
+                                          simplePendulum, spacerShortDemo, 
+                                          minimalMilliSec, spacerShortDemo, 
+                                          breathingClock, spacerShortDemo};
 const int len_clockFacesArray = sizeof (clockFacesArray) / sizeof (clockFacesArray[0]);
 ControlStruct clockFacesControlStruct {clockFacesArray, len_clockFacesArray, backlightLEDsEndingFunc, 
 //                                       LoopMode::INFINITE, &longDemoControlStruct, &adjustTimeControlStruct};
@@ -129,36 +131,53 @@ returnValue outlineClock (long currentCallNumber) {
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
-/*returnValue minimalMilliSec(long currentCallNumber) {
-  if (now.second()!=old.second())
-    {
-      old = now;
-      cyclesPerSec = (millis() - newSecTime);
-      newSecTime = millis();
-    } 
-  // set hour, min & sec LEDs
-  uint8_t hourPos = _hourPos (now.hour(), now.minute());
-  subSeconds = (((millis() - newSecTime)*60)/cyclesPerSec)%60;  // This divides by 733, but should be 1000 and not sure why???
-
-  // Millisec lights are set first, so hour/min/sec lights override and don't flicker as millisec passes
-          findLED(subSeconds)->r = 50;
-          findLED(subSeconds)->g = 50;
-          findLED(subSeconds)->b = 50;
-
-  // The colours are set last, so if on same LED mixed colours are created
-  // Hour (3 lines of code)
-          findLED(hourPos-1)->r = 30;
-          findLED(hourPos+1)->r = 30;
-          findLED(hourPos)->r  = 190;
+returnValue minimalMilliSec (long currentCallNumber) {
+    static unsigned long millisAtStart;
+    static DateTime oldTime;
+    static bool catchSeconds;
   
-  // Minute  
-          findLED(now.minute())->g = 255;
-  
-  // Second  FIXED
-          findLED(now.second())->b = 200;
+    if (currentCallNumber == 0) {
+        oldTime = now;
+        catchSeconds = false;
+    } else {
+        if (!catchSeconds) {  // Don't show seconds, wait for catching the beginning of new second
+            if (now.second () != oldTime.second ()) {
+                catchSeconds = true;
+                millisAtStart = millis ();
+            }
+        } else {              // Usual operation
+            if (now.second () != oldTime.second ()) {
+                oldTime = now;
+                millisAtStart = millis ();
+            }
 
+            // Millis
+                  float delta = 59.99*(millis () - millisAtStart)/1000; // = 0..59.99
+                  int deltaInt = delta;  // = 0..59
+                    
+                  uint8_t brightness1 = NeoPixel_gamma8 (NeoPixel_sine8( 
+                       64+static_cast <uint8_t> ((delta-deltaInt)*256.0))); //  64 means from Max to Min
+                  uint8_t brightness2 = NeoPixel_gamma8 (NeoPixel_sine8(
+                      192+static_cast <uint8_t> ((delta-deltaInt)*256.0))); // 192 means from Min to Max (same as sine8_0 ())
+                  findLED(delta)->b   = brightness1;
+                  findLED(delta+1)->b = brightness2;
+            
+            // Hour
+                  uint8_t hourPos = _hourPos (now.hour(), now.minute());
+                  findLED(hourPos-1)->r = findLED(hourPos+1)->r = 30;
+                  findLED(hourPos)->r = 170;
+                  findLED(hourPos-1)->g = findLED(hourPos+1)->g = findLED(hourPos)->g = 0;
+                  findLED(hourPos-1)->b = findLED(hourPos+1)->b = findLED(hourPos)->b = 0;
+
+            // Minute  
+                  findLED(now.minute())->g = 255;
+
+            // Second 
+                  findLED(now.second ())->b = 255;
+        }
+    }
     return returnValue::CONTINUE;
-}*/
+}
 
 //////////////////////////////////////////////////////////////////////////////////////////
 returnValue simplePendulum (long currentCallNumber) {
