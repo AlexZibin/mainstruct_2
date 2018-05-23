@@ -201,8 +201,8 @@ returnValue simplePendulum (long currentCallNumber) {
                 float pendulumPos = 30.0 - halfAmplitude + (2*halfAmplitude * sine8_0 (deltaS))/256.0; // = 22..38
                 int basePendulumPos = static_cast<int>(pendulumPos);
                 float deltaPendulumPos = pendulumPos - basePendulumPos; // = 0..1
-                uint8_8 brt1 = NeoPixel_gamma8 (NeoPixel_sine8( 64 + deltaPendulumPos*256)); // = 255..0
-                uint8_8 brt2 = NeoPixel_gamma8 (NeoPixel_sine8(192 + deltaPendulumPos*256)); // = 0..255
+                uint8_t brt1 = NeoPixel_gamma8 (NeoPixel_sine8( 64 + deltaPendulumPos*256)); // = 255..0
+                uint8_t brt2 = NeoPixel_gamma8 (NeoPixel_sine8(192 + deltaPendulumPos*256)); // = 0..255
 
                 findLED(basePendulumPos)->r = 0;
                 findLED(basePendulumPos)->g = brt1;
@@ -418,7 +418,7 @@ returnValue spacerShortDemo (long currentCallNumber) {
     byte r, g, b;
     Wheel ((millis()/15)%384, r, g, b);
     for (int led = 0; led < numLEDs; led++) {
-        uint8_t firstBrightness = sin_1_2 (static_cast<uint8_t>(deltaT/timeStep/(1-deltaT/(playTimeMs*2.1))
+        uint8_t firstBrightness = sin_1_2 (static_cast<int>(deltaT/timeStep/(1-deltaT/(playTimeMs*2.1))
                                                                 -direction*led*wavelen*(1+deltaT/(playTimeMs+4000.0)))%256);
         
         // dimming at the beginning of demo and in the end:
@@ -463,18 +463,20 @@ void backlightLEDsEndingFunc (long dummy) {
         _leds[i].b = 255;
     }
     
-    if (eeprominfo.modeNumber <> modeChanger->getCurrModeNumber ()) {
-        eeprominfo.modeNumber = modeChanger->getCurrModeNumber ();
+    if (eepromData.currentClockFace != modeChanger->getCurrModeNumber ()) {
+        clockFacesControlStruct.startMode = eepromData.currentClockFace = modeChanger->getCurrModeNumber ();
         timer.setInterval ("backlightLEDsEndingFunc, Timer for save mode in EEPROM", 5000);
         timer.switchOn ();
     }
 
-    if (timer.needToTrigger ())
+    if (timer.needToTrigger ()) {
         timer.switchOff ();
         Serial.println ("Saving mode in EEPROM!");
-        writeEeprom ();
+        //writeEeprom ();
     }
     #ifdef MOSFET_LED 
       analogWrite(MOSFET_Pin, 255);
     #endif
 }
+
+
