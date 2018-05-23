@@ -201,8 +201,8 @@ returnValue simplePendulum (long currentCallNumber) {
                 float pendulumPos = 30.0 - halfAmplitude + (2*halfAmplitude * sine8_0 (deltaS))/256.0; // = 22.0 .. 38.0
                 int basePendulumPos = static_cast<int>(pendulumPos);
                 float deltaPendulumPos = pendulumPos - basePendulumPos; // = 0..1
-                uint8_t brt1 = NeoPixel_gamma8 (NeoPixel_sine8( 64 + static_cast<int>(deltaPendulumPos*256.0))); // = 255..0
-                uint8_t brt2 = NeoPixel_gamma8 (NeoPixel_sine8(192 + static_cast<int>(deltaPendulumPos*256.0))); // = 0..255
+                uint8_t brt1 = NeoPixel_gamma8 (NeoPixel_sine8 ( 64 + static_cast<int>(deltaPendulumPos*256.0))); // = 255..0
+                uint8_t brt2 = NeoPixel_gamma8 (NeoPixel_sine8 (192 + static_cast<int>(deltaPendulumPos*256.0))); // = 0..255
 
                 findLED(basePendulumPos)->r = 0;
                 findLED(basePendulumPos)->g = brt1;
