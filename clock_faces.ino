@@ -181,7 +181,7 @@ returnValue minimalMilliSec (long currentCallNumber) {
 
 //////////////////////////////////////////////////////////////////////////////////////////
 returnValue simplePendulum (long currentCallNumber) {
-    const int halfAmplitude = 8;
+    const int halfAmplitude = 4;
     const int pendulumPeriod = 2;
     static unsigned long millisAtStart;
   
@@ -201,8 +201,8 @@ returnValue simplePendulum (long currentCallNumber) {
                 float pendulumPos = 30.0 - halfAmplitude + (2*halfAmplitude * sine8_0 (deltaS))/256.0; // = 22.0 .. 38.0
                 int basePendulumPos = static_cast<int>(pendulumPos);
                 float deltaPendulumPos = pendulumPos - basePendulumPos; // = 0..1
-                uint8_t brt1 = NeoPixel_gamma8 (NeoPixel_sine8 ( 64 + static_cast<int>(deltaPendulumPos*256.0))); // = 255..0
-                uint8_t brt2 = NeoPixel_gamma8 (NeoPixel_sine8 (192 + static_cast<int>(deltaPendulumPos*256.0))); // = 0..255
+                uint8_t brt1 = NeoPixel_gamma8 (NeoPixel_sine8 ( 64 + static_cast<int>(deltaPendulumPos*128.0))/2); // = 255..0 // = 127..0
+                uint8_t brt2 = NeoPixel_gamma8 (NeoPixel_sine8 (192 + static_cast<int>(deltaPendulumPos*128.0))/2); // = 0..255
 
                 findLED(basePendulumPos)->r = 0;
                 findLED(basePendulumPos)->g = brt1;
@@ -279,28 +279,31 @@ returnValue adjustTime (long currentCallNumber) {
     static Timer timer;
 
     if (!currentCallNumber) { // First-time entry
-        timer.setInterval ("adjustTime", 10000); // Adjustment will be aborted after 10 seconds without user's activity
+        timer.setInterval ("aT", 10000); // Adjustment will be aborted after 10 seconds without user's activity
         timer.switchOn ();
 
         deltaSeconds = 0;
         adjustmentStep = 3600; // HOURS = 60*60
-        Serial.println("\n adjustmentStep = 3600; // HOURS = 60*60");
+        //Serial.println("\n adjustmentStep = 3600; // HOURS = 60*60");
     } else {
         if (rotaryTurnLeft ()) {
             deltaSeconds -= adjustmentStep;
             timer.switchOn (); // user's activity - no termination is necessary, restore 10 seconds timeout
+            if (adjustmentStep == 1) deltaSeconds -= adjustmentStep; // Small UX trick - double TurnLeft step for seconds only
+            //Serial.print("\n adjustmentStep = "); Serial.println(adjustmentStep);
         }    
         if (rotaryTurnRight ()) {
             deltaSeconds += adjustmentStep; // HOURS -> MINUTES -> SECONDS
             timer.switchOn ();
+            //Serial.print("\n adjustmentStep = "); Serial.println(adjustmentStep);
         }    
         int dh, dm, ds;
         if (button.shortPress()) {
             timer.switchOn ();
             if (adjustmentStep == 1) {  // work done
                 splitHMS (deltaSeconds, dh, dm, ds);
-                Serial.print("\n adjustTime () detected shortPress() !!! \n dh, dm, ds: ");
-                Serial.print(dh); Serial.print(" "); Serial.print(dm); Serial.print(" "); Serial.println(ds);
+                //Serial.print("\n adjustTime () detected shortPress() !!! \n dh, dm, ds: ");
+                //Serial.print(dh); Serial.print(" "); Serial.print(dm); Serial.print(" "); Serial.println(ds);
                 
                 RTC.adjust (DateTime (now.year (), now.month (), now.day (), dh, dm, ds));
                 return returnValue::SHORTPRESS; 
@@ -308,7 +311,7 @@ returnValue adjustTime (long currentCallNumber) {
             adjustmentStep /= 60;
         }
         if (timer.needToTrigger()) { // Adjustment will be aborted 
-            Serial.print("\n adjustTime () detected needToTrigger() !!! \n dh, dm, ds: ");
+            //Serial.print("\n adjustTime () detected needToTrigger() !!! \n dh, dm, ds: ");
             timer.switchOff ();
             return returnValue::LONGPRESS; // no adjustments saved
         }
@@ -398,8 +401,8 @@ void splitHMS (int deltaSeconds, int &dh, int &dm, int &ds) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 returnValue spacerShortDemo (long currentCallNumber) {
     static unsigned long millisAtStart;
-    const long playTimeMs = 1000;
-    const float dimmingTimeMs = 500.0;
+    const long playTimeMs = 200;
+    const float dimmingTimeMs = playTimeMs / 2.0;
     static int direction = -1;
 
     if (currentCallNumber == 0) {
@@ -465,14 +468,15 @@ void backlightLEDsEndingFunc (long dummy) {
     
     if (eepromData.currentClockFace != modeChanger->getCurrModeNumber ()) {
         clockFacesControlStruct.startMode = eepromData.currentClockFace = modeChanger->getCurrModeNumber ();
-        timer.setInterval ("backlightLEDsEndingFunc, Timer for save mode in EEPROM", 5000);
+        //timer.setInterval ("backlightLEDsEndingFunc, Timer for save mode in EEPROM", 5000);
+        timer.setInterval ("ms", 5000);
         timer.switchOn ();
     }
 
     if (timer.needToTrigger ()) {
         timer.switchOff ();
-        Serial.println ("Saving mode in EEPROM!");
-        //writeEeprom ();
+        Serial.println (F("Saving mode in EEPROM!"));
+        writeEeprom ();
     }
     #ifdef MOSFET_LED 
       analogWrite(MOSFET_Pin, 255);
