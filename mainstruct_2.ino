@@ -204,6 +204,7 @@ void readEEPROM (void) {
     Serial.print (F("eepromData.remainingUnlockEfforts = ")); Serial.println (eepromData.remainingUnlockEfforts);
     Serial.print (F("clockCorrectionSecInterval = ")); Serial.println (eepromData.clockCorrectionSecInterval);
     clockFacesControlStruct.startMode = eepromData.currentClockFace;
+    Serial.print (F("clockFacesControlStruct.startMode = ")); Serial.println (clockFacesControlStruct.startMode);
 }
 
 void writeEeprom (void) {
