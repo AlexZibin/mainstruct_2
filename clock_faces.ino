@@ -468,7 +468,7 @@ void backlightLEDsEndingFunc (long dummy) {
     
     if (eepromData.currentClockFace != modeChanger->getCurrModeNumber ()) {
         clockFacesControlStruct.startMode = eepromData.currentClockFace = modeChanger->getCurrModeNumber ();
-        //timer.setInterval ("backlightLEDsEndingFunc, Timer for save mode in EEPROM", 5000);
+        //timer.setInterval (F("backlightLEDsEndingFunc, Timer for save mode in EEPROM"), 5000);
         timer.setInterval ("ms", 5000);
         timer.switchOn ();
     }
