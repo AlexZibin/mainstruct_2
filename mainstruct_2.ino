@@ -94,8 +94,8 @@ ControlStruct energySaverControlStruct {energySaverFuncArray, len_energySaverFun
                                        LoopMode::ONCE, &shortIntroControlStruct, &shortIntroControlStruct, 0};
 
 returnValue energySaver (long currentCallNumber) {
-    LEDS.clear ();
-    findLED(0)->b = NeoPixel_gamma8 (sin_1_2 ((millis()/10)%256)/3);
+    //LEDS.clear ();
+    findLED(0)->b = NeoPixel_gamma8 (sin_1_2 ((millis()/15)%256)/3);
     //findLED(led)->r = findLED(led)->g = findLED(led)->b = NeoPixel_gamma8 (sine8_0 ((millis()/5)%256)/2);
     
     #ifdef MOSFET_LED 
