@@ -1,19 +1,58 @@
-////////////////////////////////////////////////////////////////////////////////////////////
-//   CLOCK DISPLAY MODES
-//   Add any new display mode functions here.
-////////////////////////////////////////////////////////////////////////////////////////////
-
 extern ControlStruct adjustTimeControlStruct;
+extern ControlStruct a12hourPartyControlStruct;
+extern ControlStruct adjustBrightnessControlStruct;
 
+extern ControlStruct a12hourPartyControlStruct;
+extern ControlStruct clockFacesControlStruct;
+
+////////////////////
+returnValue (*adjColorArray[])(long) = {adjustColor};
+const int len_adjColorArray = 1;
+ControlStruct adjustColorControlStruct {adjColorArray, len_adjColorArray, nullptr, 
+                                       LoopMode::INFINITE, &a12hourPartyControlStruct, &clockFacesControlStruct, 0};
+
+////////////////////
+returnValue (*brightnessArray[])(long) = {adjustBrightness};
+const int len_brightnessArray = 1;
+ControlStruct adjustBrightnessControlStruct {brightnessArray, len_brightnessArray, nullptr, 
+                                       LoopMode::INFINITE, &adjustColorControlStruct, &clockFacesControlStruct, 0};
+
+////////////////////
+returnValue (*adjustTimeArray[])(long) = {adjustTime};
+const int len_adjustTimeArray = 1;
+ControlStruct adjustTimeControlStruct {adjustTimeArray, len_adjustTimeArray, nullptr, 
+                                       LoopMode::INFINITE, &clockFacesControlStruct, &clockFacesControlStruct, 0};
+//                                                         ^
+//                                                         short press is handled inside adjustTime ()
+//                                     LoopMode::INFINITE, nullptr, &clockFacesControlStruct, 0};
+
+
+extern ControlStruct clockFacesControlStruct;
+extern ControlStruct energySaverControlStruct;
+
+/////// shortIntroControlStruct ///////
+returnValue (*introFuncArray[])(long) = {fColorDemo1, fColorDemo2};
+const int len_introFuncArray = sizeof(introFuncArray)/sizeof(introFuncArray[0]);
+ControlStruct shortIntroControlStruct {introFuncArray, len_introFuncArray, nullptr, 
+                                       LoopMode::ONCE, &clockFacesControlStruct, &energySaverControlStruct, 0};
+
+/////// energySaverControlStruct ///////
+returnValue (*energySaverFuncArray[])(long) = {energySaver};
+const int len_energySaverFuncArray = sizeof(energySaverFuncArray)/sizeof(energySaverFuncArray[0]);
+ControlStruct energySaverControlStruct {energySaverFuncArray, len_energySaverFuncArray, nullptr, 
+                                       LoopMode::ONCE, &shortIntroControlStruct, &shortIntroControlStruct, 0};
+
+////////////////////
 returnValue (*clockFacesArray[])(long) = {minimalClock, spacerShortDemo, basicClock, spacerShortDemo, 
                                           smoothSecond, spacerShortDemo, outlineClock, spacerShortDemo,
                                           simplePendulum, spacerShortDemo, 
                                           minimalMilliSec, spacerShortDemo, 
-                                          breathingClock, spacerShortDemo};
+                                          breathingClock};
 const int len_clockFacesArray = sizeof (clockFacesArray) / sizeof (clockFacesArray[0]);
 ControlStruct clockFacesControlStruct {clockFacesArray, len_clockFacesArray, backlightLEDsEndingFunc, 
 //                                       LoopMode::INFINITE, &longDemoControlStruct, &adjustTimeControlStruct};
-                                       LoopMode::INFINITE, &shortIntroControlStruct, &adjustTimeControlStruct, 0};
+//                                       LoopMode::INFINITE, &shortIntroControlStruct, &adjustTimeControlStruct, 0};
+                                       LoopMode::INFINITE, &adjustBrightnessControlStruct, &adjustTimeControlStruct, 0};
 /*    fPtr *funcArray;
     int funcArrayLen;
     fPtr endingFunction;
@@ -24,9 +63,9 @@ ControlStruct clockFacesControlStruct {clockFacesArray, len_clockFacesArray, bac
 };*/
 
 
-//extern DateTime now;
-
-//////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////
+//   CLOCK DISPLAY MODES
+////////////////////////////////////////////////////////////////////////////////////////////
 returnValue minimalClock (long currentCallNumber) {
     if (currentCallNumber > 10) { // a dark screen at first few calls
         uint8_t hourPos = _hourPos (now.hour(), now.minute());
@@ -181,16 +220,10 @@ returnValue minimalMilliSec (long currentCallNumber) {
 
 //////////////////////////////////////////////////////////////////////////////////////////
 returnValue simplePendulum (long currentCallNumber) {
-    const int halfAmplitude = 4;
-    const int pendulumPeriod = 2;
+    const int halfAmplitude = 6;
+    const int pendulumPeriod = 6;
     static unsigned long millisAtStart;
   
-    for (int i = 0; i < numLEDs; i += numLEDs/12) { // 60/12 = 5
-        findLED(i)->r = 20;
-        findLED(i)->g = 20;
-        findLED(i)->b = 25;
-    }
-
     if (currentCallNumber == 0) {
         millisAtStart = millis ();
     } else {
@@ -204,28 +237,34 @@ returnValue simplePendulum (long currentCallNumber) {
                 uint8_t brt1 = NeoPixel_gamma8 (NeoPixel_sine8 ( 64 + static_cast<int>(deltaPendulumPos*128.0))/2); // = 255..0 // = 127..0
                 uint8_t brt2 = NeoPixel_gamma8 (NeoPixel_sine8 (192 + static_cast<int>(deltaPendulumPos*128.0))/2); // = 0..255
 
-                findLED(basePendulumPos)->r = 0;
+                //findLED(basePendulumPos)->r = 0;
                 findLED(basePendulumPos)->g = brt1;
                 findLED(basePendulumPos)->b = brt1;
 
-                findLED(basePendulumPos+1)->r = 0;
+                //findLED(basePendulumPos+1)->r = 0;
                 findLED(basePendulumPos+1)->g = brt2;
                 findLED(basePendulumPos+1)->b = brt2;
         
+                for (int i = 0; i < numLEDs; i += numLEDs/12) { // 60/12 = 5
+                    //findLED(i)->r = 20;
+                    //findLED(i)->g = 20;
+                    findLED(i)->b = 20;
+                }
+            
         // The colours are set last, so if on same LED mixed colours are created
         // Hour 
                 uint8_t hourPos = _hourPos (now.hour(), now.minute());
                 findLED(hourPos-1)->r = findLED(hourPos+1)->r = 30;
                 findLED(hourPos)->r  = 190;
-                findLED(hourPos-1)->g = findLED(hourPos+1)->g = findLED(hourPos)->g = 0;
-                findLED(hourPos-1)->b = findLED(hourPos+1)->b = findLED(hourPos)->b = 0;
+                //findLED(hourPos-1)->g = findLED(hourPos+1)->g = findLED(hourPos)->g = 0;
+                //findLED(hourPos-1)->b = findLED(hourPos+1)->b = findLED(hourPos)->b = 0;
 
         // Minute  
-                findLED(now.minute())->g = 255;
-                findLED(now.minute())->r = findLED(now.minute())->b = 0;
+                findLED(now.minute())->g = 190;
+                //findLED(now.minute())->r = findLED(now.minute())->b = 0;
 
         // Second  
-                findLED(now.second())->b = 255;
+                findLED(now.second())->b = 190;
     }
     return returnValue::CONTINUE;
 }
@@ -264,14 +303,6 @@ returnValue breathingClock (long currentCallNumber) {
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Time adjustment routines
-returnValue (*adjustTimeArray[])(long) = {adjustTime};
-const int len_adjustTimeArray = 1;
-ControlStruct adjustTimeControlStruct {adjustTimeArray, len_adjustTimeArray, nullptr, 
-                                       LoopMode::INFINITE, &clockFacesControlStruct, &clockFacesControlStruct, 0};
-//                                                         ^
-//                                                         short press is handled inside adjustTime ()
-
-//                                       LoopMode::INFINITE, nullptr, &clockFacesControlStruct, 0};
 
 returnValue adjustTime (long currentCallNumber) {
     static int adjustmentStep; // 60*60 for hours, 60 for minutes, 1 for seconds
@@ -289,7 +320,7 @@ returnValue adjustTime (long currentCallNumber) {
         if (rotaryTurnLeft ()) {
             deltaSeconds -= adjustmentStep;
             timer.switchOn (); // user's activity - no termination is necessary, restore 10 seconds timeout
-            if (adjustmentStep == 1) deltaSeconds -= adjustmentStep; // Small UX trick - double TurnLeft step for seconds only
+            if (adjustmentStep == 1) deltaSeconds -= 4; // Small UX trick - x5 TurnLeft step for seconds only
             //Serial.print("\n adjustmentStep = "); Serial.println(adjustmentStep);
         }    
         if (rotaryTurnRight ()) {
@@ -306,6 +337,32 @@ returnValue adjustTime (long currentCallNumber) {
                 //Serial.print(dh); Serial.print(" "); Serial.print(dm); Serial.print(" "); Serial.println(ds);
                 
                 RTC.adjust (DateTime (now.year (), now.month (), now.day (), dh, dm, ds));
+
+                
+          #ifdef CLOCK_CORRECTION
+                showDate ("Adjusting Time! ", now);
+                
+                if (((now.secondstime() - eepromData.lastClockManualCorrectionTime.secondstime())/3600 > 12)
+                        && (deltaSeconds < 180)) {
+                    Serial.println("\n Hey! Correcting clock accuracy!");
+                    long baseSeconds = now.secondstime() - eepromData.lastClockManualCorrectionTime.secondstime();
+                    float timeCoeff = static_cast<float> (deltaSeconds) / baseSeconds; // -0.0001 .. +0.0001
+                    float oldTimeCoeff = eepromData.clockCorrectionSecInterval / (3600.0*24) * eepromData.clockCorrectionDirection;
+                    timeCoeff += oldTimeCoeff;
+
+                    eepromData.clockCorrectionSecInterval = 1 / abs (timeCoeff);
+                    eepromData.clockCorrectionDirection = (timeCoeff > 0) ? 1 : -1;
+                    eepromData.lastClockManualCorrectionTime = now;
+                    writeEeprom ();
+                    
+                    Serial.print("\n clockCorrectionSecInterval = "); Serial.println(eepromData.clockCorrectionSecInterval);
+                    Serial.print("clockCorrectionDirection = "); Serial.println(eepromData.clockCorrectionDirection);
+
+                } else {
+                    Serial.println("\n NOT correcting clock accuracy!");
+                }
+            #endif
+
                 return returnValue::SHORTPRESS; 
             }
             adjustmentStep /= 60;
@@ -354,7 +411,7 @@ void drawAdjustmentClock (long deltaSeconds, int adjustmentStep) {
     
             findLED (hourPos)->r  = NeoPixel_gamma8(hourBrightness);
             if (h >= 12) 
-                findLED (hourPos-1)->r = findLED(hourPos+1)->r = NeoPixel_gamma8(hourBrightness/6);
+                findLED (hourPos-1)->r = findLED(hourPos+1)->r = NeoPixel_gamma8(hourBrightness);
 
     // Minute  
             uint8_t minuteBrightness = 255;
@@ -460,10 +517,14 @@ void erase60leds (void) {
 
 void backlightLEDsEndingFunc (long dummy) {
     static Timer timer;
+
+    byte r, g, b;
+    Wheel (eepromData.digitsColor, r, g, b);
+    
     for (int i = 0; i < startingLEDs; i++) {
-        _leds[i].g = 5;
-        _leds[i].r = 5;
-        _leds[i].b = 255;
+        _leds[i].r = r;
+        _leds[i].g = g;
+        _leds[i].b = b;
     }
     
     if (modeChanger->err ()) {
@@ -484,6 +545,8 @@ void backlightLEDsEndingFunc (long dummy) {
     #ifdef MOSFET_LED 
       analogWrite(MOSFET_Pin, 255);
     #endif
+
+    if ((now.minute () == 0) && (now.second () == 0)) modeChanger->changeCtlArray (&a12hourPartyControlStruct);
 }
 
 

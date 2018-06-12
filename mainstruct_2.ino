@@ -79,20 +79,6 @@ extern uint8_t squareSine8 (int x);
         }
 // END CONVERSIONS
 
-extern ControlStruct clockFacesControlStruct;
-extern ControlStruct energySaverControlStruct;
-/////// shortIntroControlStruct ///////
-returnValue (*introFuncArray[])(long) = {fColorDemo1, fColorDemo2};
-const int len_introFuncArray = sizeof(introFuncArray)/sizeof(introFuncArray[0]);
-ControlStruct shortIntroControlStruct {introFuncArray, len_introFuncArray, nullptr, 
-                                       LoopMode::ONCE, &clockFacesControlStruct, &energySaverControlStruct, 0};
-
-/////// energySaverControlStruct ///////
-returnValue (*energySaverFuncArray[])(long) = {energySaver};
-const int len_energySaverFuncArray = sizeof(energySaverFuncArray)/sizeof(energySaverFuncArray[0]);
-ControlStruct energySaverControlStruct {energySaverFuncArray, len_energySaverFuncArray, nullptr, 
-                                       LoopMode::ONCE, &shortIntroControlStruct, &shortIntroControlStruct, 0};
-
 returnValue energySaver (long currentCallNumber) {
     //LEDS.clear ();
     findLED(0)->b = NeoPixel_gamma8 (sin_1_2 ((millis()/15)%256)/3);
@@ -106,6 +92,8 @@ returnValue energySaver (long currentCallNumber) {
 }
 
 ModeChanger *modeChanger;
+extern ControlStruct shortIntroControlStruct;
+extern ControlStruct clockFacesControlStruct;
 
 void setup () {
     initDevices ();
@@ -124,8 +112,12 @@ void loop () {
     LEDS.clear ();
     handleUnlockCode ();
     modeChanger->loopThruModeFunc ();
+    setBrightness ();
     LEDS.show ();
+
+#ifdef CLOCK_CORRECTION
     adjustSeconds ();
+#endif
 }
 
 void initDevices (void) {
@@ -164,23 +156,24 @@ void initDevices (void) {
 
 
 /////////////////////////////////////// EEPROM
-const uint16_t correctMagicValue = 0xEFD3;
-const int correctUnlockCode[] = {2, 2}; 
+const uint16_t correctMagicValue = 0xE3D3;
+const int correctUnlockCode[] = {2, 3}; 
 const int unlockCodeLen = sizeof(correctUnlockCode)/sizeof(correctUnlockCode[0]);
 const int correctTotalUnlockCode[unlockCodeLen] = {0, 3}; // First "0" stands for totally unlocked clock
 
 struct EEPROMdata {
     uint16_t magicValue;
     int currentClockFace;
+    uint16_t digitsColor;
     
     DateTime lastClockManualCorrectionTime;
     long clockCorrectionSecInterval;
     int clockCorrectionDirection;
     
-    int dayBrightness;
-    int nightBrightness;
-    int unlockCode[unlockCodeLen];
-    int totalUnlockCode[unlockCodeLen];
+    uint8_t dayBrightness;
+    uint8_t nightBrightness;
+    //int unlockCode[unlockCodeLen];
+    //int totalUnlockCode[unlockCodeLen];
     int remainingUnlockEfforts;
 };
 
@@ -193,16 +186,20 @@ void readEEPROM (void) {
         eepromData.magicValue = correctMagicValue;
         eepromData.currentClockFace = 0;
         
-        //eepromData.lastClockCorrectionTime = now ();
         eepromData.clockCorrectionSecInterval = 0L; // 0 stands for "no correction ever made"
-        for (int i=0; i < unlockCodeLen; i++) {
-            eepromData.unlockCode[i] = correctUnlockCode[i];
-            eepromData.totalUnlockCode[i] = correctTotalUnlockCode[i];
-        }
+        eepromData.lastClockManualCorrectionTime = RTC.now ();
+
+        eepromData.dayBrightness = 255;
+        eepromData.nightBrightness = 128;
+        eepromData.digitsColor = 200;
+        
         eepromData.remainingUnlockEfforts = 5;
     }
     Serial.print (F("eepromData.remainingUnlockEfforts = ")); Serial.println (eepromData.remainingUnlockEfforts);
+#ifdef CLOCK_CORRECTION
     Serial.print (F("clockCorrectionSecInterval = ")); Serial.println (eepromData.clockCorrectionSecInterval);
+    showDate ("eepromData.lastClockManualCorrectionTime = ", eepromData.lastClockManualCorrectionTime);
+#endif
     clockFacesControlStruct.startMode = eepromData.currentClockFace;
     Serial.print (F("clockFacesControlStruct.startMode = ")); Serial.println (clockFacesControlStruct.startMode);
 }
@@ -235,55 +232,61 @@ bool rotaryTurnRight (void) {
   return false;
 }
 
-// If, for example, DS1307 loses 24 seconds per day, 
-// then we manually add 1 second 24 times a day, evenly distributed
-void adjustSeconds (void) {
-    if (eepromData.clockCorrectionSecInterval != 0) {
-        static DateTime adjustAtThisSecond (2000, 1, 1);
+#ifdef CLOCK_CORRECTION
 
-        if (adjustAtThisSecond.year () == 2000) { 
-            adjustAtThisSecond = DateTime (now.year (), now.month (), now.day (), 0, 0, 0);
-            while (adjustAtThisSecond < RTC.now ())
-                  adjustAtThisSecond = adjustAtThisSecond + TimeSpan (eepromData.clockCorrectionSecInterval);
-            showDate("adjustAtThisSecond: ", adjustAtThisSecond); //take code from DateTime timespan example
-        }
-        int s = now.second ();
-        if ((adjustAtThisSecond <= RTC.now ()) && (s > 0) && (s < 59)) {
-            adjustAtThisSecond = adjustAtThisSecond + TimeSpan (eepromData.clockCorrectionSecInterval);
-            showDate("NEW adjustAtThisSecond: ", adjustAtThisSecond); 
-            
-            RTC.adjust (DateTime (now.year (), now.month (), now.day (), 
-                                  now.hour (), now.minute (), eepromData.clockCorrectionDirection + s));
-        }
-    }
-}
-
-void showDate(const char* txt, const DateTime& dt) {
-    Serial.print(txt);
-    Serial.print(' ');
-    Serial.print(dt.year(), DEC);
-    Serial.print('/');
-    Serial.print(dt.month(), DEC);
-    Serial.print('/');
-    Serial.print(dt.day(), DEC);
-    Serial.print(' ');
-    Serial.print(dt.hour(), DEC);
-    Serial.print(':');
-    Serial.print(dt.minute(), DEC);
-    Serial.print(':');
-    Serial.print(dt.second(), DEC);
-    
-    Serial.print(" = ");
-    Serial.print(dt.unixtime());
-    Serial.print("s / ");
-    Serial.print(dt.unixtime() / 86400L);
-    Serial.print(F("d since 1970"));
-    
-    Serial.println();
-}
-
+  // If, for example, DS1307 loses 24 seconds per day, 
+  // then we manually add 1 second 24 times a day, evenly distributed
+  void adjustSeconds (void) {
+      if (eepromData.clockCorrectionSecInterval != 0) {
+          static DateTime adjustAtThisSecond (2000, 1, 1);
+  
+          if (adjustAtThisSecond.year () == 2000) { 
+              adjustAtThisSecond = DateTime (now.year (), now.month (), now.day (), 0, 0, 0);
+              while (adjustAtThisSecond < RTC.now ())
+                    adjustAtThisSecond = adjustAtThisSecond + TimeSpan (eepromData.clockCorrectionSecInterval);
+              showDate("adjustAtThisSecond: ", adjustAtThisSecond); //take code from DateTime timespan example
+          }
+          int s = now.second ();
+          if ((adjustAtThisSecond <= RTC.now ()) && (s > 0) && (s < 59)) {
+              adjustAtThisSecond = adjustAtThisSecond + TimeSpan (eepromData.clockCorrectionSecInterval);
+              showDate("NEW adjustAtThisSecond: ", adjustAtThisSecond); 
+              
+              RTC.adjust (DateTime (now.year (), now.month (), now.day (), 
+                                    now.hour (), now.minute (), eepromData.clockCorrectionDirection + s));
+          }
+      }
+  }
+  
+  void showDate(const char* txt, const DateTime& dt) {
+      Serial.print(txt);
+      Serial.print(' ');
+      Serial.print(dt.year(), DEC);
+      Serial.print('/');
+      Serial.print(dt.month(), DEC);
+      Serial.print('/');
+      Serial.print(dt.day(), DEC);
+      Serial.print(' ');
+      Serial.print(dt.hour(), DEC);
+      Serial.print(':');
+      Serial.print(dt.minute(), DEC);
+      Serial.print(':');
+      Serial.print(dt.second(), DEC);
+      
+      Serial.print(" = ");
+      Serial.print(dt.unixtime());
+      Serial.print("s / ");
+      Serial.print(dt.unixtime() / 86400L);
+      Serial.print(F("d since 1970"));
+      
+      Serial.println();
+  }
+#endif
+  
 void handleUnlockCode (void) {
     if (correctTotalUnlockCode[0] != 0) { // First "0" stands for totally unlocked clock
     }
 }
 
+void setBrightness (void) {
+    LEDS.setBrightness (eepromData.dayBrightness);
+}

@@ -1,5 +1,124 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+returnValue (*a12hourPartyFuncArray[])(long) = {_ArinaDemo, blinkHours, brightLoop};
+const int len_a12hourPartyFuncArray = sizeof(a12hourPartyFuncArray)/sizeof(a12hourPartyFuncArray[0]);
+ControlStruct a12hourPartyControlStruct {a12hourPartyFuncArray, len_a12hourPartyFuncArray, nullptr, 
+                                       LoopMode::ONCE, &clockFacesControlStruct, &clockFacesControlStruct, 0};
+
+
+returnValue _ArinaDemo (long currentCallNumber) {
+    static unsigned long millisAtStart;
+    const long playTimeMs = 15000;
+    const long growTimeMs = 12500;
+    const uint8_t r[6] = {255,   0,   0, 127, 127,   0};
+    const uint8_t g[6] = {  0, 255,   0, 127,   0, 127};
+    const uint8_t b[6] = {  0,   0, 255,   0, 127, 127};
+
+    if (currentCallNumber == 0) {
+        millisAtStart = millis ();
+    }
+
+    float deltaT = millis () - millisAtStart;
+//    unsigned long timeStep = 5;
+
+    #ifdef MOSFET_LED 
+    #endif
+
+    if (deltaT > playTimeMs) { LEDS.clear (); return returnValue::NEXT; };
+
+    float separBrightness = 255;
+    if (deltaT > growTimeMs) { 
+        separBrightness = NeoPixel_gamma8 (sine8_0 (static_cast<uint8_t>(((deltaT-growTimeMs)/(playTimeMs-growTimeMs)*128)+128)));  // = 255..0
+    };
+
+    int limit = numLEDs*(deltaT*1.5/growTimeMs)/2;  // 0..35
+    if (limit > numLEDs/2) limit = numLEDs/2;   // 0..30
+    for (int led = 0; led <= limit; led++) {
+        int ledGroup = led/5;
+        findLED(led)->r = findLED(-led)->r = r[ledGroup]*separBrightness/255;
+        findLED(led)->g = findLED(-led)->g = g[ledGroup]*separBrightness/255;
+        findLED(led)->b = findLED(-led)->b = b[ledGroup]*separBrightness/255;
+    }
+
+    uint8_t digiBrightness =  NeoPixel_gamma8 (sine8_0 (static_cast<uint8_t>(128*deltaT/growTimeMs)));
+    //Serial.println(digiBrightness);
+    for (int i = 0; i < startingLEDs; i++) {
+        _leds[i].b = _leds[i].g = _leds[i].b = digiBrightness;
+        _leds[i].r /= 2;
+    }
+
+    return returnValue::CONTINUE;
+}
+
+returnValue brightLoop (long currentCallNumber) {
+    static unsigned long millisAtStart;
+    const long playTimeMs = 3000;
+    const long growTimeMs = playTimeMs*0.8;
+
+    if (currentCallNumber == 0) {
+        millisAtStart = millis ();
+    }
+
+    float deltaT = millis () - millisAtStart;
+    unsigned long timeStep = 5;
+
+    #ifdef MOSFET_LED 
+    #endif
+
+    if (deltaT > playTimeMs) { LEDS.clear (); return returnValue::NEXT; };
+
+    uint8_t separBrightness = 255;
+    if (deltaT > growTimeMs) { 
+        separBrightness = NeoPixel_gamma8 (sine8_0 (static_cast<uint8_t>(((deltaT-growTimeMs)/(playTimeMs-growTimeMs)*128)+128)));  // = 255..0
+    };
+
+    int limit = numLEDs*(deltaT/growTimeMs);
+    if (limit > numLEDs) limit = numLEDs;
+    for (int led = 0; led < limit; led++) {
+        findLED(led)->g = separBrightness;
+    }
+
+    uint8_t digiBrightness =  NeoPixel_gamma8 (sine8_0 (static_cast<uint8_t>(128*deltaT/growTimeMs)));
+    //Serial.println(digiBrightness);
+    for (int i = 0; i < startingLEDs; i++) {
+        _leds[i].r = _leds[i].g = _leds[i].b = digiBrightness;
+        _leds[i].b /= 2;
+    }
+
+    return returnValue::CONTINUE;
+}
+
+returnValue blinkHours (long currentCallNumber) {
+    static unsigned long millisAtStart;
+    const long playTimeMs = 2800;
+
+    if (currentCallNumber == 0) {
+        millisAtStart = millis ();
+    }
+
+    unsigned long deltaT = millis () - millisAtStart;
+    unsigned long timeStep = 5;
+
+    #ifdef MOSFET_LED 
+    #endif
+
+    if (deltaT > playTimeMs) { LEDS.clear (); return returnValue::NEXT; };
+
+    uint8_t separBrightness = NeoPixel_gamma8 (sine8_0 (static_cast<uint8_t>(deltaT/timeStep)+128));
+    uint8_t digiBrightness =  NeoPixel_gamma8 (sine8_0 (static_cast<uint8_t>(deltaT/timeStep)));
+
+    for (int led = 0; led < numLEDs; led+=5) {
+        findLED(led)->b = separBrightness;
+    }
+
+    for (int i = 0; i < startingLEDs; i++) {
+        _leds[i].g = digiBrightness;
+    }
+
+    return returnValue::CONTINUE;
+}
+
+
 returnValue fColorDemo2 (long currentCallNumber) {
     static unsigned long millisAtStart;
     const long playTimeMs = 18000;
