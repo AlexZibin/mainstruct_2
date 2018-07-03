@@ -1,0 +1,7 @@
+struct EEPROMdata { + 
+DateTime lastClockManualCorrectionTime;
+
+void handleUnlockCode (void) {
+    if (correctTotalUnlockCode[0] != 0) { // First "0" stands for totally unlocked clock
+    }
+}
