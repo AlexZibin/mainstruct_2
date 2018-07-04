@@ -1,6 +1,20 @@
 struct EEPROMdata { + 
 DateTime lastClockManualCorrectionTime;
 
+extern ControlStruct adjustTimeControlStruct;
+extern ControlStruct a12hourPartyControlStruct;
+extern ControlStruct adjustBrightnessControlStruct;
+
+extern ControlStruct a12hourPartyControlStruct;
+extern ControlStruct clockFacesControlStruct;
+
+////////////////////
+returnValue (*adjColorArray[])(long) = {adjustColor};
+const int len_adjColorArray = 1;
+ControlStruct adjustColorControlStruct {adjColorArray, len_adjColorArray, nullptr, 
+                                       LoopMode::INFINITE, &a12hourPartyControlStruct, &clockFacesControlStruct, 0};
+
+
 void handleUnlockCode (void) {
     if (correctTotalUnlockCode[0] != 0) { // First "0" stands for totally unlocked clock
     }
