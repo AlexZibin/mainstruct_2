@@ -20,8 +20,7 @@ returnValue enterCode (long currentCallNumber) {
         timer.setInterval ("aC", 9000); // Adjustment will be aborted after 10 seconds without user's activity
         timer.switchOn ();
         millisAtStart = millis ();
-        value = 0;
-        count = 1;
+        count = value = 0;
     } else if (millis () - millisAtStart > demoTime) {
         if (rotaryTurnLeft ()) {
             if (value > 0) --value;
@@ -32,6 +31,8 @@ returnValue enterCode (long currentCallNumber) {
             timer.switchOn (); // user's activity - no termination is necessary, restore 10 seconds timeout
         }    
         if (button.shortPress()) {
+            tempBuf[count] = value;
+            
             writeEeprom ();
             return returnValue::SHORTPRESS; 
         }
@@ -63,7 +64,7 @@ void drawCode (unsigned long _millis, int value, int count) {
 
         // Count of entered digits
         const int startingPlace = 45;
-        for (int i = startingPlace; i < startingPlace + count; i++) {
+        for (int i = startingPlace; i <= startingPlace + count; i++) {
             findLED(i)->b = brt;
         }
 
