@@ -1,11 +1,6 @@
 struct EEPROMdata { + 
 DateTime lastClockManualCorrectionTime;
 
-extern ControlStruct adjustTimeControlStruct;
-extern ControlStruct a12hourPartyControlStruct;
-extern ControlStruct adjustBrightnessControlStruct;
-
-extern ControlStruct a12hourPartyControlStruct;
 extern ControlStruct clockFacesControlStruct;
 
 ////////////////////
@@ -29,11 +24,11 @@ returnValue enterCode (long currentCallNumber) {
         count = 1;
     } else if (millis () - millisAtStart > demoTime) {
         if (rotaryTurnLeft ()) {
-            decr0_255 (getBrightness (), brtStep);
+            if (value > 0) --value;
             timer.switchOn (); // user's activity - no termination is necessary, restore 10 seconds timeout
         }    
         if (rotaryTurnRight ()) {
-            incr0_255 (getBrightness (), brtStep);
+            ++value;
             timer.switchOn (); // user's activity - no termination is necessary, restore 10 seconds timeout
         }    
         if (button.shortPress()) {
@@ -41,8 +36,7 @@ returnValue enterCode (long currentCallNumber) {
             return returnValue::SHORTPRESS; 
         }
         if (timer.needToTrigger() || button.longPress()) { // Adjustment will be aborted 
-            Serial.print("\n setBrightness (savedBrightness)");
-            setBrightness (savedBrightness);
+            
             timer.switchOff ();
             return returnValue::LONGPRESS; // no adjustments saved
         }
@@ -55,7 +49,7 @@ void drawCode (unsigned long _millis, int value, int count) {
     uint8_t brt = 255;
 
     // 5-minute marks
-    findLED(0)->r = findLED(5)->r = findLED(10)->r = 50;
+    findLED(0)->r = findLED(5)->r = findLED(10)->r = findLED(15)->r = 50;
 
     brt = NeoPixel_gamma8 (sine8_0 (static_cast<uint8_t>(_millis*9*128.0/demoTime)));  // = 0..255
     if (_millis < demoTime) {
@@ -63,12 +57,13 @@ void drawCode (unsigned long _millis, int value, int count) {
     } else {
 
         // Display currently entered digit
-        for (int i = 1; i <= value; i++) {
+        for (int i = 0; i <= value; i++) {
             findLED(i)->r = findLED(i)->g = brt;
         }
 
         // Count of entered digits
-        for (int i = 45; i < 45+count; i++) {
+        const int startingPlace = 45;
+        for (int i = startingPlace; i < startingPlace + count; i++) {
             findLED(i)->b = brt;
         }
 
