@@ -9,19 +9,19 @@ extern ControlStruct clockFacesControlStruct;
 returnValue (*adjColorArray[])(long) = {adjustColor};
 const int len_adjColorArray = 1;
 ControlStruct adjustColorControlStruct {adjColorArray, len_adjColorArray, nullptr, 
-                                       LoopMode::INFINITE, &a12hourPartyControlStruct, &clockFacesControlStruct, 0};
+                                       LoopMode::INFINITE, &clockFacesControlStruct, &clockFacesControlStruct, 0, 0};
 
 ////////////////////
 returnValue (*brightnessArray[])(long) = {adjustBrightness};
 const int len_brightnessArray = 1;
 ControlStruct adjustBrightnessControlStruct {brightnessArray, len_brightnessArray, nullptr, 
-                                       LoopMode::INFINITE, &adjustColorControlStruct, &clockFacesControlStruct, 0};
+                                       LoopMode::INFINITE, &adjustColorControlStruct, &adjustColorControlStruct, 0, 0};
 
 ////////////////////
 returnValue (*adjustTimeArray[])(long) = {adjustTime};
 const int len_adjustTimeArray = 1;
 ControlStruct adjustTimeControlStruct {adjustTimeArray, len_adjustTimeArray, nullptr, 
-                                       LoopMode::INFINITE, &clockFacesControlStruct, &clockFacesControlStruct, 0};
+                                       LoopMode::INFINITE, &clockFacesControlStruct, &clockFacesControlStruct, 0, 0};
 //                                                         ^
 //                                                         short press is handled inside adjustTime ()
 //                                     LoopMode::INFINITE, nullptr, &clockFacesControlStruct, 0};
@@ -29,18 +29,19 @@ ControlStruct adjustTimeControlStruct {adjustTimeArray, len_adjustTimeArray, nul
 
 extern ControlStruct clockFacesControlStruct;
 extern ControlStruct energySaverControlStruct;
+extern ControlStruct longDemoFacesControlStruct;
 
 /////// shortIntroControlStruct ///////
 returnValue (*introFuncArray[])(long) = {fColorDemo1, fColorDemo2};
 const int len_introFuncArray = sizeof(introFuncArray)/sizeof(introFuncArray[0]);
 ControlStruct shortIntroControlStruct {introFuncArray, len_introFuncArray, nullptr, 
-                                       LoopMode::ONCE, &clockFacesControlStruct, &energySaverControlStruct, 0};
+                                       LoopMode::ONCE, &clockFacesControlStruct, &energySaverControlStruct, 0, 0};
 
 /////// energySaverControlStruct ///////
 returnValue (*energySaverFuncArray[])(long) = {energySaver};
 const int len_energySaverFuncArray = sizeof(energySaverFuncArray)/sizeof(energySaverFuncArray[0]);
 ControlStruct energySaverControlStruct {energySaverFuncArray, len_energySaverFuncArray, nullptr, 
-                                       LoopMode::ONCE, &shortIntroControlStruct, &shortIntroControlStruct, 0};
+                                       LoopMode::ONCE, &shortIntroControlStruct, &clockFacesControlStruct, 0, 0};
 
 ////////////////////
 returnValue (*clockFacesArray[])(long) = {minimalClock, spacerShortDemo, basicClock, spacerShortDemo, 
@@ -52,7 +53,19 @@ const int len_clockFacesArray = sizeof (clockFacesArray) / sizeof (clockFacesArr
 ControlStruct clockFacesControlStruct {clockFacesArray, len_clockFacesArray, backlightLEDsEndingFunc, 
 //                                       LoopMode::INFINITE, &longDemoControlStruct, &adjustTimeControlStruct};
 //                                       LoopMode::INFINITE, &shortIntroControlStruct, &adjustTimeControlStruct, 0};
-                                       LoopMode::INFINITE, &adjustBrightnessControlStruct, &adjustTimeControlStruct, 0};
+                                       LoopMode::INFINITE, &longDemoFacesControlStruct, &adjustTimeControlStruct, 0, 0};
+
+////////////////////
+returnValue (*longDemoFacesArray[])(long) = {fColorDemo2, minimalClock, _ArinaDemo, 
+                                          basicClock, blinkHours, 
+                                          smoothSecond, brightLoop, 
+                                          outlineClock, _ArinaDemo,
+                                          simplePendulum, blinkHours, 
+                                          minimalMilliSec, brightLoop, 
+                                          breathingClock};
+const int len_longDemoFacesArray = sizeof (longDemoFacesArray) / sizeof (longDemoFacesArray[0]);
+ControlStruct longDemoFacesControlStruct {longDemoFacesArray, len_longDemoFacesArray, nullptr, 
+                                       LoopMode::INFINITE, &adjustBrightnessControlStruct, &energySaverControlStruct, 0, 15};
 /*    fPtr *funcArray;
     int funcArrayLen;
     fPtr endingFunction;
@@ -73,6 +86,7 @@ returnValue minimalClock (long currentCallNumber) {
         findLED(now.minute())->g = 160;
         findLED(now.second())->b = 160;
     }
+    backlightLEDs ();
     return returnValue::CONTINUE;
 }
 
@@ -99,6 +113,7 @@ returnValue basicClock(long currentCallNumber) {
           findLED(now.second())->g =   0;
           findLED(now.second())->b = 255;
 
+    backlightLEDs ();
     return returnValue::CONTINUE;
 }
 
@@ -142,6 +157,7 @@ returnValue smoothSecond (long currentCallNumber) {
                   findLED(now.second () + 1)->b = secondBrightness2;    
         }
     }
+    backlightLEDs ();
     return returnValue::CONTINUE;
 }
 
@@ -166,7 +182,8 @@ returnValue outlineClock (long currentCallNumber) {
     // Second  
             findLED(now.second())->b = 255;
   
-      return returnValue::CONTINUE;
+    backlightLEDs ();
+    return returnValue::CONTINUE;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -215,6 +232,7 @@ returnValue minimalMilliSec (long currentCallNumber) {
                   findLED(now.second ())->b = 255;
         }
     }
+    backlightLEDs ();
     return returnValue::CONTINUE;
 }
 
@@ -266,6 +284,7 @@ returnValue simplePendulum (long currentCallNumber) {
         // Second  
                 findLED(now.second())->b = 190;
     }
+    backlightLEDs ();
     return returnValue::CONTINUE;
 }
 
@@ -298,6 +317,7 @@ returnValue breathingClock (long currentCallNumber) {
   // Second  
           findLED(now.second())->b = 255;
 
+    backlightLEDs ();
     return returnValue::CONTINUE;
 }
 
@@ -515,9 +535,7 @@ void erase60leds (void) {
     }
 }    
 
-void backlightLEDsEndingFunc (long dummy) {
-    static Timer timer;
-
+void backlightLEDs () {
     byte r, g, b;
     Wheel (eepromData.digitsColor, r, g, b);
     
@@ -526,7 +544,11 @@ void backlightLEDsEndingFunc (long dummy) {
         _leds[i].g = g;
         _leds[i].b = b;
     }
+}
     
+void backlightLEDsEndingFunc (long dummy) {
+    static Timer timer;
+
     if (modeChanger->err ()) {
         Serial.print (F("Error modechanger ")); Serial.println (modeChanger->err ());
     }

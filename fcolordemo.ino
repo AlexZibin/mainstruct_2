@@ -3,16 +3,16 @@
 returnValue (*a12hourPartyFuncArray[])(long) = {_ArinaDemo, blinkHours, brightLoop};
 const int len_a12hourPartyFuncArray = sizeof(a12hourPartyFuncArray)/sizeof(a12hourPartyFuncArray[0]);
 ControlStruct a12hourPartyControlStruct {a12hourPartyFuncArray, len_a12hourPartyFuncArray, nullptr, 
-                                       LoopMode::ONCE, &clockFacesControlStruct, &clockFacesControlStruct, 0};
+                                       LoopMode::ONCE, &clockFacesControlStruct, &clockFacesControlStruct, 0, 0};
 
 
 returnValue _ArinaDemo (long currentCallNumber) {
     static unsigned long millisAtStart;
-    const long playTimeMs = 15000;
-    const long growTimeMs = 12500;
-    const uint8_t r[6] = {255,   0,   0, 127, 127,   0};
-    const uint8_t g[6] = {  0, 255,   0, 127,   0, 127};
-    const uint8_t b[6] = {  0,   0, 255,   0, 127, 127};
+    const long playTimeMs = 13000;
+    const long growTimeMs = 10500;
+    const uint8_t r[7] = {255,   0,   0, 127, 127,   0,   0};
+    const uint8_t g[7] = {  0, 255,   0, 127,   0, 127, 127};
+    const uint8_t b[7] = {  0,   0, 255,   0, 127, 127, 127};
 
     if (currentCallNumber == 0) {
         millisAtStart = millis ();
@@ -32,7 +32,9 @@ returnValue _ArinaDemo (long currentCallNumber) {
     };
 
     int limit = numLEDs*(deltaT*1.5/growTimeMs)/2;  // 0..35
-    if (limit > numLEDs/2) limit = numLEDs/2;   // 0..30
+    if (limit > numLEDs/2) {
+        limit = numLEDs/2;   // 0..30
+    }
     for (int led = 0; led <= limit; led++) {
         int ledGroup = led/5;
         findLED(led)->r = findLED(-led)->r = r[ledGroup]*separBrightness/255;
@@ -121,7 +123,7 @@ returnValue blinkHours (long currentCallNumber) {
 
 returnValue fColorDemo2 (long currentCallNumber) {
     static unsigned long millisAtStart;
-    const long playTimeMs = 18000;
+    const long playTimeMs = 14500;
 
     if (currentCallNumber == 0) {
       millisAtStart = millis ();

@@ -6,11 +6,21 @@
 #include <Encoder.h>          // Include the Encoder library to read the outputs of the rotary encoders
 #include <EEPROMex.h>         // Extended EEPROM library / Copyright (c) 2012 Thijs Elenbaas.  All right reserved.
 
+#define DEBUG
+#ifdef DEBUG
+  #define log(msg) Serial.print(msg)
+  #define logln(msg) Serial.print("msg: "); Serial.println(msg)
+#else
+  #define log(msg)
+  #define logln(msg)
+#endif
+
 // Pin definitions:
-//    #define ARDUINO_NANO
+    //#define ARDUINO_NANO
 
     #ifdef ARDUINO_NANO
           //#define reedSwitchPin 3 // Switches off the display to reduce power consumption (before re-flashing)
+          #define LIGHT_SENSOR A2
           #define rotaryLeft 3
           #define rotaryRight 4
           #define LEDStripPin 9 // Data pin
@@ -23,6 +33,7 @@
           #define menuPin 2 // Arduino Pro Mini supports external interrupts only on pins 2 and 3
 //          #define reedSwitchPin 3 // Switches off the display to reduce power consumption (before re-flashing)
           #define LEDStripPin 3 // Data pin
+          #define LIGHT_SENSOR A2
           #define rotaryLeft 4
           #define rotaryRight 5
           #define MOSFET_Pin 9 
@@ -121,6 +132,8 @@ void loop () {
 }
 
 void initDevices (void) {
+    pinMode (LIGHT_SENSOR, INPUT);
+    
     // Start LEDs
     LEDS.addLeds<WS2812B, LEDStripPin, GRB>(_leds, startingLEDs+numLEDs); 
     LEDS.clear(true);
@@ -287,6 +300,68 @@ void handleUnlockCode (void) {
     }
 }
 
+////////////////////////////
+enum class BrightnessChangeState {NONE, CHANGE_TO_NIGHT, CHANGE_TO_DAY};
+BrightnessChangeState brightnessChangeState = BrightnessChangeState::NONE;
+
+uint8_t *brightnessPtr = &eepromData.dayBrightness;
+
 void setBrightness (void) {
-    LEDS.setBrightness (eepromData.dayBrightness);
+    needTriggerBrightness ();
+    LEDS.setBrightness (*brightnessPtr);
 }
+
+void needTriggerBrightness (void) {
+    const int threshold = 90; // 0..1024
+    const int gist = 30;
+    static Timer timer (3000, "nt");
+    
+    int sensorBrightness = analogRead (LIGHT_SENSOR); // 0..1024
+    
+    #ifdef DEBUG
+        if (millis() % 1000 < 2) {
+            logln (sensorBrightness);
+        }
+    #endif
+    
+    switch (brightnessChangeState) {
+        case BrightnessChangeState::NONE:
+            if (brightnessPtr == &eepromData.dayBrightness) { // DAY active
+                if (sensorBrightness < threshold - gist) {
+                    brightnessChangeState = BrightnessChangeState::CHANGE_TO_NIGHT;
+                    timer.switchOn ();
+                }
+            } else { // NIGHT active
+                if (sensorBrightness > threshold + gist) {
+                    logln ("CHANGE_TO_DAY");
+                    brightnessChangeState = BrightnessChangeState::CHANGE_TO_DAY;
+                    timer.switchOn ();
+                }
+            }
+            break;
+        case BrightnessChangeState::CHANGE_TO_NIGHT:
+                if (sensorBrightness > threshold + gist) {
+                    brightnessChangeState = BrightnessChangeState::NONE;
+                } else {
+                    if (timer.needToTrigger ()) {
+                        brightnessChangeState = BrightnessChangeState::NONE;
+                        brightnessPtr = &eepromData.nightBrightness;
+                        //logln ("nightBrightness");
+                    }
+                }
+            break;
+        case BrightnessChangeState::CHANGE_TO_DAY:
+                if (sensorBrightness < threshold - gist) {
+                    brightnessChangeState = BrightnessChangeState::NONE;
+                } else {
+                    if (timer.needToTrigger ()) {
+                        brightnessChangeState = BrightnessChangeState::NONE;
+                        brightnessPtr = &eepromData.dayBrightness;
+                        //logln ("dayBrightness");
+                    }
+                }
+            break;
+    } // switch (brightnessChangeState)
+}
+
+

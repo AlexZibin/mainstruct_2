@@ -29,7 +29,7 @@ returnValue adjustBrightness (long currentCallNumber) {
             return returnValue::SHORTPRESS; 
         }
         if (timer.needToTrigger() || button.longPress()) { // Adjustment will be aborted 
-            Serial.print("\n setBrightness (savedBrightness)");
+            //Serial.println("\n setBrightness (savedBrightness)");
             setBrightness (savedBrightness);
             timer.switchOff ();
             return returnValue::LONGPRESS; // no adjustments saved
@@ -92,11 +92,13 @@ void drawBrtClock (unsigned long _millis) {
 
 }
 
+extern uint8_t *brightnessPtr;
 uint8_t &getBrightness (void) {
-    return eepromData.dayBrightness;
+    return *brightnessPtr; //eepromData.dayBrightness;
 }
 
 void setBrightness (uint8_t brt) {
-    eepromData.dayBrightness = brt;
+    *brightnessPtr = brt;
+    //eepromData.dayBrightness = brt;
 }
 

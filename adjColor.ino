@@ -2,7 +2,7 @@
 // Color of digits
 ///////////////////////
 
-const unsigned long demoTime = 1500;
+const unsigned long demoTime = 3500;
 
 returnValue adjustColor (long currentCallNumber) {
     static unsigned long millisAtStart;
@@ -11,7 +11,7 @@ returnValue adjustColor (long currentCallNumber) {
     static int dColor;
 
     if (!currentCallNumber) { // First-time entry
-        timer.setInterval ("aT", 7000); // Adjustment will be aborted after 10 seconds without user's activity
+        timer.setInterval ("aT", 8000); // Adjustment will be aborted after 10 seconds without user's activity
         timer.switchOn ();
         millisAtStart = millis ();
         dColor = eepromData.digitsColor;
@@ -43,11 +43,17 @@ returnValue adjustColor (long currentCallNumber) {
 void drawColorDigits (unsigned long _millis, uint16_t dColor) {
 
     if (_millis < demoTime) {
-        dColor += _millis * 200.0 / demoTime;
+        dColor += _millis * 400.0 / demoTime;
     }
     
     byte r, g, b;
     Wheel (dColor, r, g, b);
+    if (_millis < demoTime) {
+        incr0_255 (r, 20);
+        incr0_255 (g, 20);
+        incr0_255 (b, 20);
+    }
+    
     for (int i = 0; i < startingLEDs; i++) {
         _leds[i].r = r;
         _leds[i].g = g;
