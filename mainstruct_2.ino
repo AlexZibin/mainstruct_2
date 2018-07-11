@@ -169,10 +169,10 @@ void initDevices (void) {
 
 
 /////////////////////////////////////// EEPROM
-const uint16_t correctMagicValue = 0xE3D3;
 const int correctUnlockCode[] = {2, 3}; 
 const int unlockCodeLen = sizeof(correctUnlockCode)/sizeof(correctUnlockCode[0]);
 const int correctTotalUnlockCode[unlockCodeLen] = {0, 3}; // First "0" stands for totally unlocked clock
+const uint16_t correctMagicValue = 0xE3D3+unlockCodeLen;
 
 struct EEPROMdata {
     uint16_t magicValue;
@@ -185,6 +185,7 @@ struct EEPROMdata {
     
     uint8_t dayBrightness;
     uint8_t nightBrightness;
+    int brtThreshold; // 0..1024, we compare this value with LDR readout at LIGHT_SENSOR 
     //int unlockCode[unlockCodeLen];
     //int totalUnlockCode[unlockCodeLen];
     int remainingUnlockEfforts;
@@ -204,6 +205,7 @@ void readEEPROM (void) {
 
         eepromData.dayBrightness = 255;
         eepromData.nightBrightness = 128;
+        eepromData.brtThreshold = 70; // 0..1024, we compare this value with LDR readout at LIGHT_SENSOR 
         eepromData.digitsColor = 200;
         
         eepromData.remainingUnlockEfforts = 5;
@@ -301,6 +303,22 @@ void handleUnlockCode (void) {
 }
 
 ////////////////////////////
+enum class CountMagicState {DOWN = 0, UP = 1, RESET}; // DOWN and UP are used as index in array
+
+int countMagic (CountMagicState state) {
+    static unsigned long savedMils [2];
+    
+    switch (state) {
+        case CountMagicState::RESET:
+            savedMils [0] = savedMils [1] = millis ();
+            break;
+        case CountMagicState::DOWN:
+            break;
+        case CountMagicState::UP:
+            break;
+    }
+}
+
 enum class BrightnessChangeState {NONE, CHANGE_TO_NIGHT, CHANGE_TO_DAY};
 BrightnessChangeState brightnessChangeState = BrightnessChangeState::NONE;
 
@@ -312,8 +330,7 @@ void setBrightness (void) {
 }
 
 void needTriggerBrightness (void) {
-    const int threshold = 90; // 0..1024
-    const int gist = 30;
+    const int gist = 15;
     static Timer timer (3000, "nt");
     
     int sensorBrightness = analogRead (LIGHT_SENSOR); // 0..1024
@@ -326,14 +343,15 @@ void needTriggerBrightness (void) {
     
     switch (brightnessChangeState) {
         case BrightnessChangeState::NONE:
+            countMagic (CountMagicState::RESET);
             if (brightnessPtr == &eepromData.dayBrightness) { // DAY active
-                if (sensorBrightness < threshold - gist) {
+                if (sensorBrightness < eepromData.brtThreshold - gist) {
                     brightnessChangeState = BrightnessChangeState::CHANGE_TO_NIGHT;
                     timer.switchOn ();
                 }
             } else { // NIGHT active
-                if (sensorBrightness > threshold + gist) {
-                    logln ("CHANGE_TO_DAY");
+                if (sensorBrightness > eepromData.brtThreshold + gist) {
+                    //logln (F("CHANGE_TO_DAY"));
                     brightnessChangeState = BrightnessChangeState::CHANGE_TO_DAY;
                     timer.switchOn ();
                 }
@@ -363,5 +381,3 @@ void needTriggerBrightness (void) {
             break;
     } // switch (brightnessChangeState)
 }
-
-
