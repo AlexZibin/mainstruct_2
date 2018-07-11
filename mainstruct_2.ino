@@ -110,7 +110,7 @@ void setup () {
     initDevices ();
     readEEPROM ();
     
-    Serial.println ("\n\nStarting...");
+    logln ("\n\nStarting...");
     modeChanger = new ModeChanger (&shortIntroControlStruct);
 }
 
@@ -138,33 +138,29 @@ void initDevices (void) {
     LEDS.addLeds<WS2812B, LEDStripPin, GRB>(_leds, startingLEDs+numLEDs); 
     LEDS.clear(true);
     
-    Serial.begin (9600);
-    EEPROM.setMaxAllowedWrites (200);
+    #ifdef DEBUG
+        Serial.begin (9600);
+    #endif
+    EEPROM.setMaxAllowedWrites (20000);
 
     // Start RTC
     Wire.begin (); // Arduino Pro Mini i2c: SDA = A4, SCL = A5.
     if (!RTC.begin ()) { // Starts communications to the RTC
-        Serial.println(F("Couldn't find RTC"));
+        logln (F("Couldn't find RTC"));
     }
     if (!RTC.isrunning ()) {
-        Serial.println(F("RTC is NOT running!"));
+        logln (F("RTC is NOT running!"));
         RTC.adjust(DateTime(F(__DATE__), F(__TIME__)));
     }
     //RTC.adjust(DateTime(F(__DATE__), F(__TIME__)));
     DateTime now = RTC.now();
-    Serial.print(F("Hour time is... "));
-    Serial.println(now.hour());
-    Serial.print(F("Min time is... "));
-    Serial.println(now.minute());
-    Serial.print(F("Sec time is... "));
-    Serial.println(now.second());
+    log (F("Hour time is... ")); logln (now.hour ());
+    log (F("Min time is... "));  logln (now.minute ());
+    log (F("Sec time is... "));  logln (now.second ());
     
-    Serial.print(F("Year is... "));
-    Serial.println(now.year());
-    Serial.print(F("Month is... "));
-    Serial.println(now.month());
-    Serial.print(F("Day is... "));
-    Serial.println(now.day());
+    log (F("Year is... "));  logln (now.year ());
+    log (F("Month is... ")); logln (now.month ());
+    log (F("Day is... "));   logln (now.day ());
 }
 
 
@@ -196,7 +192,7 @@ void readEEPROM (void) {
     EEPROM.readBlock <EEPROMdata> (0, eepromData);
     
     if (eepromData.magicValue != correctMagicValue) { // EEPROM is blank
-        Serial.println (F("EEPROM is blank!"));
+        logln (F("EEPROM is blank!"));
         eepromData.magicValue = correctMagicValue;
         eepromData.currentClockFace = 0;
         
@@ -204,19 +200,19 @@ void readEEPROM (void) {
         eepromData.lastClockManualCorrectionTime = RTC.now ();
 
         eepromData.dayBrightness = 255;
-        eepromData.nightBrightness = 128;
-        eepromData.brtThreshold = 70; // 0..1024, we compare this value with LDR readout at LIGHT_SENSOR 
+        eepromData.nightBrightness = 64;
+        eepromData.brtThreshold = 70; // 0..1024, we compare this value with LDR readout at LIGHT_SENSOR pin
         eepromData.digitsColor = 200;
         
         eepromData.remainingUnlockEfforts = 5;
     }
-    Serial.print (F("eepromData.remainingUnlockEfforts = ")); Serial.println (eepromData.remainingUnlockEfforts);
+    log (F("eepromData.remainingUnlockEfforts = ")); logln (eepromData.remainingUnlockEfforts);
 #ifdef CLOCK_CORRECTION
-    Serial.print (F("clockCorrectionSecInterval = ")); Serial.println (eepromData.clockCorrectionSecInterval);
+    log (F("clockCorrectionSecInterval = ")); logln (eepromData.clockCorrectionSecInterval);
     showDate ("eepromData.lastClockManualCorrectionTime = ", eepromData.lastClockManualCorrectionTime);
 #endif
     clockFacesControlStruct.startMode = eepromData.currentClockFace;
-    Serial.print (F("clockFacesControlStruct.startMode = ")); Serial.println (clockFacesControlStruct.startMode);
+    log (F("clockFacesControlStruct.startMode = ")); logln (clockFacesControlStruct.startMode);
 }
 
 void writeEeprom (void) {
