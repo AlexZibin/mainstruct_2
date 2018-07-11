@@ -9,7 +9,7 @@
 #define DEBUG
 #ifdef DEBUG
   #define log(msg) Serial.print(msg)
-  #define logln(msg) Serial.print("msg: "); Serial.println(msg)
+  #define logln(msg) Serial.println(msg)
 #else
   #define log(msg)
   #define logln(msg)
@@ -305,18 +305,26 @@ void handleUnlockCode (void) {
 ////////////////////////////
 enum class CountMagicState {DOWN = 0, UP = 1, RESET}; // DOWN and UP are used as index in array
 
-int countMagic (CountMagicState state) {
+int countMagic (CountMagicState state, int periodMs = 1000, int gistMs = 100) {
     static unsigned long savedMils [2];
+    static int counter {0};
     
-    switch (state) {
-        case CountMagicState::RESET:
-            savedMils [0] = savedMils [1] = millis ();
-            break;
-        case CountMagicState::DOWN:
-            break;
-        case CountMagicState::UP:
-            break;
+    if (counter == 0) {
+        savedMils [state] = millis ();
+    } 
+    
+    {
+        long timePassed = millis () - savedMils[state];
+        if ((timePassed >= periodMs - gistMs) && (timePassed <= periodMs + gistMs)) {
+            ++counter;
+            savedMils[state] = millis ();
+            log ("CountMagicState counter: "); log (counter); log (";  state: "); logln (state); 
+        } else { // reset:
+            savedMils [DOWN] = savedMils [UP] = millis ();
+            counter = 0;
+        }
     }
+    return counter;
 }
 
 enum class BrightnessChangeState {NONE, CHANGE_TO_NIGHT, CHANGE_TO_DAY};
@@ -343,11 +351,11 @@ void needTriggerBrightness (void) {
     
     switch (brightnessChangeState) {
         case BrightnessChangeState::NONE:
-            countMagic (CountMagicState::RESET);
             if (brightnessPtr == &eepromData.dayBrightness) { // DAY active
                 if (sensorBrightness < eepromData.brtThreshold - gist) {
                     brightnessChangeState = BrightnessChangeState::CHANGE_TO_NIGHT;
                     timer.switchOn ();
+                    countMagic (CountMagicState::DOWN);
                 }
             } else { // NIGHT active
                 if (sensorBrightness > eepromData.brtThreshold + gist) {
@@ -360,6 +368,7 @@ void needTriggerBrightness (void) {
         case BrightnessChangeState::CHANGE_TO_NIGHT:
                 if (sensorBrightness > threshold + gist) {
                     brightnessChangeState = BrightnessChangeState::NONE;
+                    countMagic (CountMagicState::UP);
                 } else {
                     if (timer.needToTrigger ()) {
                         brightnessChangeState = BrightnessChangeState::NONE;
