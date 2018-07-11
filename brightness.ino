@@ -19,10 +19,10 @@ returnValue adjustBrightness (long currentCallNumber) {
     static Timer timer;
     static uint8_t savedBrightnessD;
     static uint8_t savedBrightnessN;
-    const uint8_t brtStep = 20;
+    const uint8_t brtStep = 15;
 
     if (!currentCallNumber) { // First-time entry
-        timer.setInterval ("aT", 5000); // Adjustment will be aborted after 10 seconds without user's activity
+        timer.setInterval ("aT", 9000); // Adjustment will be aborted after 10 seconds without user's activity
         timer.switchOn ();
         millisAtStart = millis ();
         savedBrightnessD = eepromData.dayBrightness;
