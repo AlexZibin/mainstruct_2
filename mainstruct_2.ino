@@ -305,23 +305,20 @@ void handleUnlockCode (void) {
 ////////////////////////////
 enum class CountMagicState {DOWN = 0, UP = 1, RESET}; // DOWN and UP are used as index in array
 
-int countMagic (CountMagicState state, int periodMs = 1000, int gistMs = 100) {
+int countMagic (CountMagicState state1, int periodMs = 1000, int gistMs = 150) {
     static unsigned long savedMils [2];
     static int counter {0};
     
-    if (counter == 0) {
-        savedMils [state] = millis ();
-    } 
-    
-    {
-        long timePassed = millis () - savedMils[state];
+    if (counter < 2) {
+        savedMils [counter++] = millis ();
+    } else {
+        long timePassed = millis () - savedMils[counter%2];
         if ((timePassed >= periodMs - gistMs) && (timePassed <= periodMs + gistMs)) {
-            ++counter;
-            savedMils[state] = millis ();
-            log ("CountMagicState counter: "); log (counter); log (";  state: "); logln (state); 
+            savedMils[counter++%2] = millis ();
+            log (F("CountMagicState counter: ")); logln (counter); //log (";  state: "); logln (state); 
         } else { // reset:
-            savedMils [DOWN] = savedMils [UP] = millis ();
             counter = 0;
+            logln (F("CountMagicState counter RESET!"));
         }
     }
     return counter;
