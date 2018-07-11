@@ -50,9 +50,9 @@ returnValue adjustBrightness (long currentCallNumber) {
         }
     }
     
-    { int mode; 
-    if (brightnessPtr == &eepromData.nightBrightness) mode = 0; else mode = 1;
-    drawBrtClock (millis () - millisAtStart, getBrightness (), mode);
+    {   int mode; 
+        if (brightnessPtr == &eepromData.nightBrightness) mode = 0; else mode = 1;
+        drawBrtClock (millis () - millisAtStart, getBrightness (), mode);
     }
     
     return returnValue::CONTINUE; // continue next loop
