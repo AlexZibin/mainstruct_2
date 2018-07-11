@@ -365,7 +365,7 @@ void needTriggerBrightness (void) {
         case BrightnessChangeState::CHANGE_TO_NIGHT:
                 if (sensorBrightness > threshold + gist) {
                     brightnessChangeState = BrightnessChangeState::NONE;
-                    //countMagic (CountMagicState::UP);
+                    countMagic (CountMagicState::UP);
                 } else {
                     if (timer.needToTrigger ()) {
                         brightnessChangeState = BrightnessChangeState::NONE;
