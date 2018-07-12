@@ -215,15 +215,16 @@ void readEEPROM (void) {
     log (F("clockFacesControlStruct.startMode = ")); logln (clockFacesControlStruct.startMode);
 }
 
-void writeEeprom (void) {
+inline void writeEeprom (void) {
     EEPROM.writeBlock <EEPROMdata> (0, eepromData);
 }
 
+const long rotaryDelay = 150;
 bool rotaryTurnLeft (void) {
   static long lastRotary = 0;
   int rotary1Pos = rotary1.read(); // Checks the rotary position
 
-  if (rotary1Pos <= -ROTARY_TICKS && (millis() - lastRotary) >= 200) {
+  if (rotary1Pos <= -ROTARY_TICKS && (millis() - lastRotary) >= rotaryDelay) {
       rotary1.write(0);
       lastRotary = millis();
       return true;
@@ -235,7 +236,7 @@ bool rotaryTurnRight (void) {
   static long lastRotary = 0;
   int rotary1Pos = rotary1.read(); // Checks the rotary position
 
-  if (rotary1Pos >= ROTARY_TICKS && (millis() - lastRotary) >= 200) {
+  if (rotary1Pos >= ROTARY_TICKS && (millis() - lastRotary) >= rotaryDelay) {
       rotary1.write(0);
       lastRotary = millis();
       return true;
