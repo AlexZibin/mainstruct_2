@@ -8,11 +8,11 @@
 
 #define DEBUG
 #ifdef DEBUG
-  #define log(msg) Serial.print(msg)
-  #define logln(msg) Serial.println(msg)
+    #define log(msg) Serial.print(msg)
+    #define logln(msg) Serial.println(msg)
 #else
-  #define log(msg)
-  #define logln(msg)
+    #define log(msg)
+    #define logln(msg)
 #endif
 
 // Pin definitions:
@@ -43,10 +43,10 @@
 // No leading 4 leds, only mosfet thru pin9
 //#define MOSFET_LED 
 #ifdef MOSFET_LED 
-  #define startingLEDs 0 // Number of backlight LEDs BEFORE the strip
+    #define startingLEDs 0 // Number of backlight LEDs BEFORE the strip
 #endif
 #ifndef MOSFET_LED 
-  #define startingLEDs 4 // Number of backlight LEDs BEFORE the strip
+    #define startingLEDs 4 // Number of backlight LEDs BEFORE the strip
 #endif
 
 #define numLEDs 60 // Number of LEDs in strip
@@ -221,27 +221,27 @@ inline void writeEeprom (void) {
 
 const long rotaryDelay = 150;
 bool rotaryTurnLeft (void) {
-  static long lastRotary = 0;
-  int rotary1Pos = rotary1.read(); // Checks the rotary position
+    static long lastRotary = 0;
+    int rotary1Pos = rotary1.read(); // Checks the rotary position
 
-  if (rotary1Pos <= -ROTARY_TICKS && (millis() - lastRotary) >= rotaryDelay) {
+    if (rotary1Pos <= -ROTARY_TICKS && (millis() - lastRotary) >= rotaryDelay) {
       rotary1.write(0);
       lastRotary = millis();
       return true;
-  } 
-  return false;
+    } 
+    return false;
 }
 
 bool rotaryTurnRight (void) {
-  static long lastRotary = 0;
-  int rotary1Pos = rotary1.read(); // Checks the rotary position
+    static long lastRotary = 0;
+    int rotary1Pos = rotary1.read(); // Checks the rotary position
 
-  if (rotary1Pos >= ROTARY_TICKS && (millis() - lastRotary) >= rotaryDelay) {
+    if (rotary1Pos >= ROTARY_TICKS && (millis() - lastRotary) >= rotaryDelay) {
       rotary1.write(0);
       lastRotary = millis();
       return true;
-  } 
-  return false;
+    } 
+    return false;
 }
 
 #ifdef CLOCK_CORRECTION
