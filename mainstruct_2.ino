@@ -332,7 +332,7 @@ void setBrightness (void) {
 }
 
 void needTriggerBrightness (void) {
-    const int gist = 15;
+    const int gist = 9;
     static Timer timer (3000, "nt");
     
     int sensorBrightness = analogRead (LIGHT_SENSOR); // 0..1024
