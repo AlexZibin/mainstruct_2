@@ -8,8 +8,8 @@ ControlStruct a12hourPartyControlStruct {a12hourPartyFuncArray, len_a12hourParty
 
 returnValue _ArinaDemo (long currentCallNumber) {
     static unsigned long millisAtStart;
-    const long playTimeMs = 13000;
-    const long growTimeMs = 10500;
+    const long playTimeMs = 12000;
+    const long growTimeMs =  8500;
     const uint8_t r[7] = {255,   0,   0, 127, 127,   0,   0};
     const uint8_t g[7] = {  0, 255,   0, 127,   0, 127, 127};
     const uint8_t b[7] = {  0,   0, 255,   0, 127, 127, 127};
@@ -35,9 +35,11 @@ returnValue _ArinaDemo (long currentCallNumber) {
     if (limit > numLEDs/2) {
         limit = numLEDs/2;   // 0..30
     }
+
+    int hourMark = now.hour () * numLEDs / 12; // hour == 1 => hourMark == 5, etc.
     for (int led = 0; led <= limit; led++) {
         int ledGroup = led/5;
-        findLED(led)->r = findLED(-led)->r = r[ledGroup]*separBrightness/255;
+        findLED(hourMark+led)->r = findLED(hourMark-led)->r = r[ledGroup]*separBrightness/255;
         findLED(led)->g = findLED(-led)->g = g[ledGroup]*separBrightness/255;
         findLED(led)->b = findLED(-led)->b = b[ledGroup]*separBrightness/255;
     }
@@ -45,7 +47,7 @@ returnValue _ArinaDemo (long currentCallNumber) {
     uint8_t digiBrightness =  NeoPixel_gamma8 (sine8_0 (static_cast<uint8_t>(128*deltaT/growTimeMs)));
     //Serial.println(digiBrightness);
     for (int i = 0; i < startingLEDs; i++) {
-        _leds[i].b = _leds[i].g = _leds[i].b = digiBrightness;
+        _leds[i].r = _leds[i].g = _leds[i].b = digiBrightness;
         _leds[i].r /= 2;
     }
 
