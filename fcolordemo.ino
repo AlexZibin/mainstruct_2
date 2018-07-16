@@ -32,16 +32,23 @@ returnValue _ArinaDemo (long currentCallNumber) {
     };
 
     int limit = numLEDs*(deltaT*1.5/growTimeMs)/2;  // 0..35
+    if (deltaT > growTimeMs) { 
+        limit = (1 - (deltaT-growTimeMs)*1.05/(playTimeMs-growTimeMs))*numLEDs/2;  // 30..0
+    }
+
     if (limit > numLEDs/2) {
         limit = numLEDs/2;   // 0..30
+    }
+    if (limit < 1) {
+        limit = 1;   // 30..1
     }
 
     int hourMark = now.hour () * numLEDs / 12; // hour == 1 => hourMark == 5, etc.
     for (int led = 0; led <= limit; led++) {
         int ledGroup = led/5;
         findLED(hourMark+led)->r = findLED(hourMark-led)->r = r[ledGroup]*separBrightness/255;
-        findLED(led)->g = findLED(-led)->g = g[ledGroup]*separBrightness/255;
-        findLED(led)->b = findLED(-led)->b = b[ledGroup]*separBrightness/255;
+        findLED(hourMark+led)->g = findLED(hourMark-led)->g = g[ledGroup]*separBrightness/255;
+        findLED(hourMark+led)->b = findLED(hourMark-led)->b = b[ledGroup]*separBrightness/255;
     }
 
     uint8_t digiBrightness =  NeoPixel_gamma8 (sine8_0 (static_cast<uint8_t>(128*deltaT/growTimeMs)));
