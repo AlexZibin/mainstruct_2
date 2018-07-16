@@ -38,8 +38,7 @@ returnValue _ArinaDemo (long currentCallNumber) {
 
     if (limit > numLEDs/2) {
         limit = numLEDs/2;   // 0..30
-    }
-    if (limit < 1) {
+    } else if (limit < 1) {
         limit = 1;   // 30..1
     }
 
