@@ -31,9 +31,9 @@ returnValue _ArinaDemo (long currentCallNumber) {
         separBrightness = NeoPixel_gamma8 (sine8_0 (static_cast<uint8_t>(((deltaT-growTimeMs)/(playTimeMs-growTimeMs)*128)+128)));  // = 255..0
     };
 
-    int limit = numLEDs*(deltaT*1.5/growTimeMs)/2;  // 0..35
+    int limit = static_cast<int> (numLEDs*(deltaT*1.5/growTimeMs)) >> 1;  // 0..35
     if (deltaT > growTimeMs) { 
-        limit = (1 - (deltaT-growTimeMs)*1.05/(playTimeMs-growTimeMs))*numLEDs/2;  // 30..0
+        limit = (1 - (deltaT-growTimeMs)*2.05/(playTimeMs-growTimeMs))*(numLEDs >> 1);  // 30..0
     }
 
     if (limit > numLEDs/2) {
@@ -42,7 +42,8 @@ returnValue _ArinaDemo (long currentCallNumber) {
         limit = 1;   // 30..1
     }
 
-    int hourMark = now.hour () * numLEDs / 12; // hour == 1 => hourMark == 5, etc.
+    int hourMark = (now.hour () * numLEDs + (now.minute () + 6))/ 12; // hour == 1 => hourMark == 5, etc.
+    
     for (int led = 0; led <= limit; led++) {
         int ledGroup = led/5;
         findLED(hourMark+led)->r = findLED(hourMark-led)->r = r[ledGroup]*separBrightness/255;
@@ -54,7 +55,7 @@ returnValue _ArinaDemo (long currentCallNumber) {
     //Serial.println(digiBrightness);
     for (int i = 0; i < startingLEDs; i++) {
         _leds[i].r = _leds[i].g = _leds[i].b = digiBrightness;
-        _leds[i].r /= 2;
+        _leds[i].r >>= 1;
     }
 
     return returnValue::CONTINUE;
@@ -80,14 +81,15 @@ returnValue brightLoop (long currentCallNumber) {
     uint8_t separBrightness = 255;
     if (deltaT > growTimeMs) { 
         separBrightness = NeoPixel_gamma8 (sine8_0 (static_cast<uint8_t>(((deltaT-growTimeMs)/(playTimeMs-growTimeMs)*128)+128)));  // = 255..0
-    };
+    }
 
+    int hourMark = (now.hour () * numLEDs + (now.minute () + 6))/ 12; // hour == 1 => hourMark == 5, etc.
     int limit = numLEDs*(deltaT/growTimeMs);
     if (limit > numLEDs) limit = numLEDs;
-    for (int led = 0; led < limit; led++) {
-        if (now.seconds () < 20)
+    for (int led = hourMark; led < hourMark+limit; led++) {
+        if (now.second () < 20)
             findLED(led)->r = separBrightness;
-        else if (now.seconds () < 40)
+        else if (now.second () < 40)
             findLED(led)->g = separBrightness;
         else
             findLED(led)->b = separBrightness;
@@ -97,7 +99,7 @@ returnValue brightLoop (long currentCallNumber) {
     //Serial.println(digiBrightness);
     for (int i = 0; i < startingLEDs; i++) {
         _leds[i].r = _leds[i].g = _leds[i].b = digiBrightness;
-        _leds[i].b /= 2;
+        _leds[i].b >>= 1;
     }
 
     return returnValue::CONTINUE;

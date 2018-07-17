@@ -1,8 +1,8 @@
-struct EEPROMdata { + 
-DateTime lastClockManualCorrectionTime;
+//struct EEPROMdata { + 
+//DateTime lastClockManualCorrectionTime;
 
 extern ControlStruct clockFacesControlStruct;
-
+/*
 ////////////////////
 returnValue (*enterCodeArray[])(long) = {enterCode};
 const int len_enterCodeArray = 1;
@@ -10,7 +10,7 @@ ControlStruct enterCodeControlStruct {enterCodeArray, len_enterCodeArray, nullpt
                                        LoopMode::INFINITE, &clockFacesControlStruct, &clockFacesControlStruct, 0, 0};
 
 
-const uint16_t correctMagicValue = 0xE3D3+unlockCodeLen; // Move to mainstruct!
+//const uint16_t correctMagicValue = 0xE3D3+unlockCodeLen; // Move to mainstruct!
 
 returnValue enterCode (long currentCallNumber) {
     static unsigned long millisAtStart;
@@ -76,14 +76,15 @@ void drawCode (unsigned long _millis, int value, int count) {
         }
 
         for (int i = 0; i < startingLEDs; i++) {
-            /*_leds[i].g = 5; */
+            //_leds[i].g = 5; 
             _leds[i].r = 128;
             _leds[i].g = 128;
         }
     }
 }
-
+/*
 void handleUnlockCode (void) {
     if (correctTotalUnlockCode[0] != 0) { // First "0" stands for totally unlocked clock
     }
 }
+*/

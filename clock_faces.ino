@@ -550,7 +550,7 @@ void backlightLEDsEndingFunc (long dummy) {
     static Timer timer;
 
     if (modeChanger->err ()) {
-        Serial.print (F("Error modechanger ")); Serial.println (modeChanger->err ());
+        log (F("Error modechanger ")); logln (modeChanger->err ());
     }
     else if (eepromData.currentClockFace != modeChanger->getCurrModeNumber ()) {
         clockFacesControlStruct.startMode = eepromData.currentClockFace = modeChanger->getCurrModeNumber ();
@@ -561,7 +561,7 @@ void backlightLEDsEndingFunc (long dummy) {
 
     if (timer.needToTrigger ()) {
         timer.switchOff ();
-        Serial.println (F("Saving mode in EEPROM!"));
+        logln (F("Saving mode in EEPROM!"));
         writeEeprom ();
     }
     #ifdef MOSFET_LED 
@@ -570,5 +570,4 @@ void backlightLEDsEndingFunc (long dummy) {
 
     if ((now.minute () == 0) && (now.second () == 0)) modeChanger->changeCtlArray (&a12hourPartyControlStruct);
 }
-
 

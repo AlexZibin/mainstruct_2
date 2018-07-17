@@ -333,7 +333,7 @@ void setBrightness (void) {
 
 void needTriggerBrightness (void) {
     const int gist = 9;
-    static Timer timer (3000, "nt");
+    static Timer timer (2000, "nt");
     
     int sensorBrightness = analogRead (LIGHT_SENSOR); // 0..1024
     
@@ -360,7 +360,7 @@ void needTriggerBrightness (void) {
             }
             break;
         case BrightnessChangeState::CHANGE_TO_NIGHT:
-                if (sensorBrightness > threshold + gist) {
+                if (sensorBrightness > eepromData.brtThreshold + gist) {
                     brightnessChangeState = BrightnessChangeState::NONE;
                     countMagic (CountMagicState::UP);
                 } else {
@@ -372,7 +372,7 @@ void needTriggerBrightness (void) {
                 }
             break;
         case BrightnessChangeState::CHANGE_TO_DAY:
-                if (sensorBrightness < threshold - gist) {
+                if (sensorBrightness < eepromData.brtThreshold - gist) {
                     brightnessChangeState = BrightnessChangeState::NONE;
                 } else {
                     if (timer.needToTrigger ()) {
