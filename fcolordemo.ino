@@ -85,7 +85,12 @@ returnValue brightLoop (long currentCallNumber) {
     int limit = numLEDs*(deltaT/growTimeMs);
     if (limit > numLEDs) limit = numLEDs;
     for (int led = 0; led < limit; led++) {
-        findLED(led)->g = separBrightness;
+        if (now.seconds () < 20)
+            findLED(led)->r = separBrightness;
+        else if (now.seconds () < 40)
+            findLED(led)->g = separBrightness;
+        else
+            findLED(led)->b = separBrightness;
     }
 
     uint8_t digiBrightness =  NeoPixel_gamma8 (sine8_0 (static_cast<uint8_t>(128*deltaT/growTimeMs)));
