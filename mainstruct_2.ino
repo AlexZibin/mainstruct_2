@@ -168,7 +168,7 @@ void initDevices (void) {
 const int correctUnlockCode[] = {2, 3}; 
 const int unlockCodeLen = sizeof(correctUnlockCode)/sizeof(correctUnlockCode[0]);
 const int correctTotalUnlockCode[unlockCodeLen] = {0, 3}; // First "0" stands for totally unlocked clock
-const uint16_t correctMagicValue = 0xE3D3+unlockCodeLen;
+const uint16_t correctMagicValue = 0xE5D3+unlockCodeLen;
 
 struct EEPROMdata {
     uint16_t magicValue;
@@ -201,7 +201,7 @@ void readEEPROM (void) {
 
         eepromData.dayBrightness = 255;
         eepromData.nightBrightness = 64;
-        eepromData.brtThreshold = 70; // 0..1024, we compare this value with LDR readout at LIGHT_SENSOR pin
+        eepromData.brtThreshold = 50; // 0..1024, we compare this value with LDR readout at LIGHT_SENSOR pin
         eepromData.digitsColor = 200;
         
         eepromData.remainingUnlockEfforts = 5;
