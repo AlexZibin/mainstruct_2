@@ -168,7 +168,7 @@ void initDevices (void) {
 const int correctUnlockCode[] = {2, 3}; 
 const int unlockCodeLen = sizeof(correctUnlockCode)/sizeof(correctUnlockCode[0]);
 const int correctTotalUnlockCode[unlockCodeLen] = {0, 3}; // First "0" stands for totally unlocked clock
-const uint16_t correctMagicValue = 0xE5D3+unlockCodeLen;
+const uint16_t correctMagicValue = 0xE6D3+unlockCodeLen;
 
 struct EEPROMdata {
     uint16_t magicValue;
@@ -201,7 +201,7 @@ void readEEPROM (void) {
 
         eepromData.dayBrightness = 255;
         eepromData.nightBrightness = 64;
-        eepromData.brtThreshold = 50; // 0..1024, we compare this value with LDR readout at LIGHT_SENSOR pin
+        eepromData.brtThreshold = 40; // 0..1024, we compare this value with LDR readout at LIGHT_SENSOR pin
         eepromData.digitsColor = 200;
         
         eepromData.remainingUnlockEfforts = 5;
@@ -302,7 +302,7 @@ void handleUnlockCode (void) {
 ////////////////////////////
 enum class CountMagicState {DOWN = 0, UP = 1, RESET}; // DOWN and UP are used as index in array
 
-int countMagic (CountMagicState state1, int periodMs = 1000, int gistMs = 150) {
+/*int countMagic (CountMagicState state1, int periodMs = 1000, int gistMs = 150) {
     static unsigned long savedMils [2];
     static int counter {0};
     
@@ -319,7 +319,7 @@ int countMagic (CountMagicState state1, int periodMs = 1000, int gistMs = 150) {
         }
     }
     return counter;
-}
+} */
 
 enum class BrightnessChangeState {NONE, CHANGE_TO_NIGHT, CHANGE_TO_DAY};
 BrightnessChangeState brightnessChangeState = BrightnessChangeState::NONE;
@@ -332,7 +332,7 @@ void setBrightness (void) {
 }
 
 void needTriggerBrightness (void) {
-    const int gist = 9;
+    const int gist = 7;
     static Timer timer (2000, "nt");
     
     int sensorBrightness = analogRead (LIGHT_SENSOR); // 0..1024
