@@ -42,22 +42,31 @@ returnValue adjustColor (long currentCallNumber) {
 
 void drawColorDigits (unsigned long _millis, uint16_t dColor) {
 
-    if (_millis < demoTime) {
-        dColor += _millis * 400.0 / demoTime;
-    }
-    
-    byte r, g, b;
-    Wheel (dColor, r, g, b);
-    if (_millis < demoTime) {
-        incr0_255 (r, 20);
-        incr0_255 (g, 20);
-        incr0_255 (b, 20);
-    }
-    
-    for (int i = 0; i < startingLEDs; i++) {
-        _leds[i].r = r;
-        _leds[i].g = g;
-        _leds[i].b = b;
+    if (_millis < 1000) 
+        for (int i = 0; i < startingLEDs; i++) {
+            _leds[i].r = 255;
+            _leds[i].g = 255;
+            _leds[i].b = 255;
+        }
+    else {
+        if (_millis < demoTime) {
+            dColor += _millis * 400.0 / demoTime;
+            log ("\tdColor: "); logln (dColor);
+        }
+        
+        byte r, g, b;
+        Wheel (dColor, r, g, b);
+        if (_millis < demoTime) {
+            incr0_255 (r, 20);
+            incr0_255 (g, 20);
+            incr0_255 (b, 20);
+        }
+        
+        for (int i = 0; i < startingLEDs; i++) {
+            _leds[i].r = r;
+            _leds[i].g = g;
+            _leds[i].b = b;
+        }
     }
 }
 

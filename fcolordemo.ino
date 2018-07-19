@@ -365,6 +365,8 @@ returnValue fColorDemo3 (long currentCallNumber) {
 //Input a value 0 to 384 to get a color value.
 //The colours are a transition r - g - b - back to r
 void Wheel (uint16_t WheelPos, byte &r, byte &g, byte &b) {
+  while (WheelPos >= 384) WheelPos -= 384;
+  
   switch(WheelPos / 128) {
     case 0:
       r = 127 - WheelPos % 128; // red down
