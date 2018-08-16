@@ -34,6 +34,7 @@ returnValue _ArinaDemo (long currentCallNumber) {
     int limit = static_cast<int> (numLEDs*(deltaT*1.5/growTimeMs)) >> 1;  // 0..35
     if (deltaT > growTimeMs) { 
         limit = (1 - (deltaT-growTimeMs)*2.05/(playTimeMs-growTimeMs))*(numLEDs >> 1);  // 30..0
+        logln (limit);
     }
 
     if (limit > numLEDs/2) {
